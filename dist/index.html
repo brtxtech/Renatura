@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#173d31">
+  <meta name="description" content="Renatura Normandie — explorer les priorités de restauration et comparer des scénarios transparents.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="maplibre-gl.css">
+  <link rel="stylesheet" href="styles.css">
+  <title>Renatura · Normandie</title>
+</head>
+<body>
+  <a class="skip-link" href="#main">Aller au contenu</a>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Renatura accueil">
+      <svg width="35" height="38" viewBox="0 0 35 38" aria-hidden="true">
+        <path d="M18 34V16M18 24C4 25 3 12 4 6c14 0 18 8 14 18Zm0-7C17 7 24 3 32 3c1 9-4 16-14 14Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      <span>renatura<span class="brand-region">NORMANDIE</span></span>
+    </a>
+    <nav class="main-nav" aria-label="Navigation principale">
+      <button class="nav-link active" data-page="explore" data-i18n="explore">Explorer</button>
+      <button class="nav-link" data-page="scenarios" data-i18n="scenarios">Scénarios</button>
+      <button class="nav-link" data-page="method" data-i18n="method">Méthodologie</button>
+      <button class="nav-link" data-page="sources" data-i18n="sources">Données</button>
+    </nav>
+    <div class="top-actions">
+      <span id="connection-status" class="connection-status"><span></span> Local-first</span>
+      <button id="language" class="quiet-button" aria-label="Change language">EN</button>
+      <button id="share" class="outline-button" data-i18n="share">Partager la vue ↗</button>
+    </div>
+  </header>
+  <main id="main">
+    <section id="workspace" class="workspace">
+      <aside class="sidebar" aria-label="Filtres et paramètres">
+        <div class="eyebrow" data-i18n="decision">AIDE À LA DÉCISION</div>
+        <h1 data-i18n="headline">Restaurer les liens<br>du vivant.</h1>
+        <p class="intro" data-i18n="intro">Explorer un territoire. Comprendre ses fragilités. Choisir où agir.</p>
+        <div class="territory-card">
+          <div class="territory-icon">◈</div>
+          <div><strong>Pays d’Auge</strong><small>FR2502014 · Orne, Normandie</small></div>
+          <span class="pilot-badge">PILOTE</span>
+        </div>
+        <label class="field-label" for="search" data-i18n="searchLabel">Rechercher une commune</label>
+        <div class="search-box"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Commune ou identifiant…" autocomplete="off"></div>
+        <div class="section-heading"><h2 data-i18n="view">Indicateur cartographié</h2><span>01</span></div>
+        <div class="segmented" role="group" aria-label="Vue">
+          <button class="active" data-metric="RP" data-i18n="restore">Restauration</button>
+          <button data-metric="PP" data-i18n="protect">Protection</button>
+        </div>
+        <select id="metric" aria-label="Indicateur">
+          <option value="RP">RP · Priorité partielle</option>
+          <option value="V">V · Structure écologique</option>
+          <option value="D">D · Recul net des haies</option>
+          <option value="P">P · Pression — indisponible</option>
+          <option value="O">O · Opportunité — indisponible</option>
+          <option value="betweenness">Intermédiarité du graphe</option>
+          <option value="PP">Protection — indisponible</option>
+        </select>
+        <div class="coverage-note"><span>!</span><p data-i18n="partialNotice">Pilote exploratoire : V et D disponibles. Pression et faisabilité non renseignées.</p></div>
+        <label class="check-row"><input id="partial" type="checkbox" checked><span data-i18n="allowPartial">Autoriser le score partiel V + D</span></label>
+        <div class="section-heading"><h2 data-i18n="weights">Pondération des critères</h2><button id="reset-weights" class="text-button" data-i18n="reset">Réinitialiser</button></div>
+        <div id="weights"></div>
+        <p class="micro" data-i18n="weightNote">Poids normalisés. Les critères manquants sont exclus uniquement en mode partiel.</p>
+        <div class="section-heading"><h2 data-i18n="filters">Affiner la sélection</h2><span>02</span></div>
+        <label class="range-title" for="minimum"><span data-i18n="minimum">Score minimum</span><output id="minimum-value">0</output></label>
+        <input id="minimum" type="range" min="0" max="100" value="0">
+        <label class="range-title" for="confidence"><span data-i18n="coverage">Couverture des critères</span><output id="confidence-value">0%</output></label>
+        <input id="confidence" type="range" min="0" max="100" step="25" value="0">
+        <div class="section-heading"><h2 data-i18n="layers">Couches du territoire</h2><span>03</span></div>
+        <label class="check-row"><input type="checkbox" data-layer="boundary" checked><span data-i18n="boundary">Périmètre Natura 2000</span><i class="layer-key boundary-key"></i></label>
+        <label class="check-row"><input type="checkbox" data-layer="woodland"><span data-i18n="woodland">Zones boisées · 2016</span><i class="layer-key wood-key"></i></label>
+        <label class="check-row"><input type="checkbox" data-layer="hedges"><span data-i18n="hedges">Haies observées</span><i class="layer-key hedge-key"></i></label>
+        <label class="check-row"><input type="checkbox" data-layer="routes"><span data-i18n="routes">Connexions modélisées</span><i class="layer-key route-key"></i></label>
+        <label class="field-label" for="year" data-i18n="year">Millésime des haies</label>
+        <select id="year"><option>1947</option><option>2010</option><option selected>2016</option></select>
+        <p class="micro" data-i18n="yearNote">Change la couche observée, pas les scores 2010–2016.</p>
+        <div class="sidebar-footer"><span class="leaf-dot"></span><span data-i18n="privacy">Sans suivi · Sans serveur de calcul</span></div>
+      </aside>
+      <div class="map-workspace">
+        <div class="map-heading"><div><span class="eyebrow" data-i18n="atlas">ATLAS DE RESTAURATION</span><h2 id="map-title">Bocages du sud Pays d’Auge</h2></div><span class="version-tag">PILOT / 01</span></div>
+        <div class="stat-strip">
+          <div><span data-i18n="units">Unités analysées</span><strong id="stat-cells">—</strong></div>
+          <div><span data-i18n="area">Surface étudiée</span><strong id="stat-area">—</strong></div>
+          <div><span data-i18n="hedgeLength">Haies · 2016</span><strong id="stat-hedges">—</strong></div>
+          <div><span data-i18n="dataCoverage">Critères disponibles</span><strong>2 <small>/ 4</small></strong></div>
+        </div>
+        <div class="map-container">
+          <div id="map" role="region" aria-label="Carte interactive du pilote Pays d’Auge"></div>
+          <div id="fallback" hidden><h3 data-i18n="fallback">Vue cartographique 2D</h3><svg id="fallback-map" viewBox="0 0 1000 700" aria-label="Carte 2D des cellules"></svg></div>
+          <div class="map-toolbar">
+            <div class="map-mode"><button id="mode-2d" class="active">2D</button><button id="mode-3d">3D</button><button id="heatmap" class="active" aria-pressed="true" title="Palette thermique / Heat palette">🌡</button></div>
+            <button id="reset-map" class="map-button" title="Recentrer" aria-label="Recentrer">⌖</button>
+            <button id="toggle-table" class="map-button" title="Tableau" aria-label="Afficher le tableau">▤</button>
+          </div>
+          <div class="map-caption"><span class="live-dot"></span><span data-i18n="realData">Données réelles · Observations historiques</span></div>
+          <div class="map-legend"><div><strong id="legend-title">Priorité partielle</strong><small>0–100</small></div><div class="gradient"></div><div class="legend-labels"><span data-i18n="low">Faible</span><span data-i18n="high">Élevée</span></div><p>3D : hauteur = score × 8 m (pas le relief).</p><p data-i18n="grey">Gris : donnée absente / non éligible</p></div>
+          <div id="loading" class="loading-card"><span class="spinner"></span><span data-i18n="loading">Chargement du territoire…</span></div>
+          <div id="detail-panel" class="detail-panel" hidden></div>
+        </div>
+        <div class="bottom-bar"><span id="visible-count">—</span><span data-i18n="mapNote">Maillage 1 km² · Indice indicatif, pas un diagnostic écologique</span></div>
+        <section id="table-panel" class="table-panel" hidden>
+          <div class="section-heading"><h2 data-i18n="ranking">Classement des unités</h2><div><button id="csv-export" class="outline-button">CSV ↓</button><button id="geo-export" class="outline-button">GeoJSON ↓</button></div></div>
+          <div class="table-scroll"><table><thead><tr><th>#</th><th data-i18n="commune">Commune / cellule</th><th>RP</th><th>V</th><th>D</th><th data-i18n="coverage">Couverture</th><th>ha</th></tr></thead><tbody id="ranking-body"></tbody></table></div>
+        </section>
+      </div>
+      <aside id="scenario-panel" class="scenario-panel">
+        <div class="eyebrow" data-i18n="scenarioLab">LABORATOIRE DE SCÉNARIOS</div>
+        <h2 data-i18n="whereAct">Où agir en premier ?</h2>
+        <p class="intro" data-i18n="scenarioIntro">Définissez une enveloppe. Comparez les sites et leurs connexions.</p>
+        <div class="preset-label" data-i18n="presets">SCÉNARIOS PRÉCALCULÉS</div>
+        <div id="presets" class="preset-list"></div>
+        <div class="divider"><span data-i18n="custom">ou composer un scénario</span></div>
+        <label class="field-label" for="constraint" data-i18n="constraint">Type de contrainte</label>
+        <select id="constraint"><option value="sites">Nombre maximum de sites</option><option value="hectares">Surface maximale · hectares</option><option value="proxy">Budget proxy · unités hectare</option></select>
+        <label class="field-label" for="budget" data-i18n="envelope">Enveloppe disponible</label>
+        <div class="budget-field"><input id="budget" type="number" min="0" max="100000" step="1" value="12"><span id="budget-unit">sites</span></div>
+        <label class="range-title" for="lambda"><span data-i18n="connectivityWeight">Poids de la connectivité</span><output id="lambda-value">0.35</output></label>
+        <input id="lambda" type="range" min="0" max="2" step="0.05" value="0.35">
+        <p class="micro" data-i18n="proxyNote">Le proxy utilise la surface, jamais des euros. Le coût réel des travaux est inconnu.</p>
+        <button id="run-scenario" class="primary-button" data-i18n="compute">Calculer la sélection <span>↗</span></button>
+        <button id="cancel-scenario" class="outline-button full-width" hidden data-i18n="cancel">Annuler le calcul</button>
+        <p class="micro" data-i18n="solverNote">Recherche locale limitée à 3 s. L’optimalité n’est annoncée que si elle est démontrée.</p>
+        <div id="scenario-result" class="scenario-result" aria-live="polite"><div class="empty-icon">⌁</div><p data-i18n="resultEmpty">Choisissez un scénario pour visualiser les sites retenus.</p></div>
+        <button id="export-scenario" class="outline-button full-width" hidden data-i18n="exportScenario">Exporter le scénario ↓</button>
+      </aside>
+    </section>
+    <section id="method-page" class="document-page" hidden></section>
+    <section id="sources-page" class="document-page" hidden></section>
+  </main>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <script src="maplibre-gl.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

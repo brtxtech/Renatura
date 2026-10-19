@@ -1,0 +1,10 @@
+geopandas==1.1.1
+shapely>=2.0.0,<3.0.0
+pyproj>=3.5.0
+pyogrio>=0.7.0
+duckdb>=1.0.0
+pulp>=2.8.0
+networkx>=3.0
+pyarrow>=14.0.0
+numpy>=1.24.0
+pandas>=2.0.0

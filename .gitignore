@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+raw/pilot/
+raw/natura/
+derived/
+node_modules/
+*.tar.gz
+*.zip.part
