@@ -1,0 +1,16 @@
+services:
+  neo4j:
+    image: neo4j:5.26.32-community
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: neo4j/${NEO4J_PASSWORD:?Run run-renatura.command to generate a local password}
+      NEO4J_server_memory_heap_initial__size: 256m
+      NEO4J_server_memory_heap_max__size: 768m
+      NEO4J_server_memory_pagecache_size: 256m
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - renatura_neo4j:/data
+volumes:
+  renatura_neo4j:

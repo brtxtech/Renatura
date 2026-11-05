@@ -1,0 +1,32 @@
+{
+  "checks": "PASS",
+  "statistics": {
+    "inventory_entries": 1016,
+    "api_sources": 221,
+    "original_files": 41,
+    "original_files_available": 41,
+    "mapped_features": 2930005,
+    "mapped_layers": 275,
+    "layers": 354,
+    "display_simplification_m": 30
+  },
+  "grid_zones": 1354,
+  "geometry_types": {
+    "Polygon": 2826076,
+    "MultiPolygon": 11611,
+    "GeometryCollection": 124,
+    "Point": 19986,
+    "LineString": 71185,
+    "MultiLineString": 1023
+  },
+  "api_statuses": {
+    "PARTIAL": 60,
+    "COMPLETE": 144,
+    "ERROR": 17
+  },
+  "conversion_states": {
+    "READY": 275,
+    "NO_NORMANDY_GEOMETRY": 57,
+    "NON_SPATIAL_OR_ARCHIVE": 22
+  }
+}
