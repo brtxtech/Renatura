@@ -1,0 +1,50 @@
+{
+  "collected_on": "2026-11-05",
+  "purpose": "Orientation cartographique; not incorporated into scenario scores or ecological counts",
+  "sources": [
+    {
+      "id": "roads",
+      "feature_count": 80092,
+      "raw_sha256": "f0c4db2e5a8a1d0c3a1f077191e89b0125b7491ff1df9211506051ecb56ee12d",
+      "osm_timestamp": "2026-11-05T08:11:07Z",
+      "url": "https://overpass-api.de/api/interpreter",
+      "license": "OpenStreetMap ODbL 1.0",
+      "scope": "Bounding box WGS84: west -2.0, south 48.1, east 1.9, north 50.2; includes neighbouring areas",
+      "display_simplification_degrees": 5e-05
+    },
+    {
+      "id": "rail",
+      "feature_count": 10678,
+      "raw_sha256": "f4b0b1581c7267c3c3fa0b8f4d1f2d66d6604b244c386534c1cfbbd3af510555",
+      "osm_timestamp": "2026-11-05T08:11:07Z",
+      "url": "https://overpass-api.de/api/interpreter",
+      "license": "OpenStreetMap ODbL 1.0",
+      "scope": "Bounding box WGS84: west -2.0, south 48.1, east 1.9, north 50.2; includes neighbouring areas",
+      "display_simplification_degrees": 5e-05
+    },
+    {
+      "id": "stops",
+      "feature_count": 20966,
+      "raw_sha256": "b8a90e5cee8ac80dc25468d1c13376749cc80139ebe61b81722ad0b2e68d9aff",
+      "osm_timestamp": "2026-11-05T08:12:06Z",
+      "url": "https://overpass-api.de/api/interpreter",
+      "license": "OpenStreetMap ODbL 1.0",
+      "scope": "Bounding box WGS84: west -2.0, south 48.1, east 1.9, north 50.2; includes neighbouring areas",
+      "display_simplification_degrees": 5e-05
+    },
+    {
+      "id": "cities",
+      "feature_count": 2644,
+      "raw_sha256": "c41d3b398fd6efc230b3a7b53a283d333266ff7ba7d0a0945a2cf34d993a1139",
+      "urls": [
+        "https://geo.api.gouv.fr/departements/14/communes?fields=nom,code,population,centre&format=geojson&geometry=centre",
+        "https://geo.api.gouv.fr/departements/27/communes?fields=nom,code,population,centre&format=geojson&geometry=centre",
+        "https://geo.api.gouv.fr/departements/50/communes?fields=nom,code,population,centre&format=geojson&geometry=centre",
+        "https://geo.api.gouv.fr/departements/61/communes?fields=nom,code,population,centre&format=geojson&geometry=centre",
+        "https://geo.api.gouv.fr/departements/76/communes?fields=nom,code,population,centre&format=geojson&geometry=centre"
+      ],
+      "license": "Licence Ouverte 2.0",
+      "scope": "Communes of Normandy; administrative centres for orientation only"
+    }
+  ]
+}

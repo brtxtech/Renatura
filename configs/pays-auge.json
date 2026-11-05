@@ -1,0 +1,17 @@
+{
+  "site": "FR2502014",
+  "title": "Bocages et vergers du sud Pays d’Auge",
+  "analysis_area_m2": 1000000,
+  "weights": [0.30, 0.30, 0.15, 0.25],
+  "allow_partial": true,
+  "connectivity_weight": 0.35,
+  "monte_carlo_runs": 1000,
+  "seed": 42,
+  "presets": [
+    {"id": "focused", "name": "Intervention ciblée", "mode": "sites", "budget": 5},
+    {"id": "balanced", "name": "Réseau équilibré", "mode": "sites", "budget": 12},
+    {"id": "ambitious", "name": "Ambition territoriale", "mode": "sites", "budget": 25},
+    {"id": "area", "name": "Enveloppe de 500 ha", "mode": "hectares", "budget": 500},
+    {"id": "proxy", "name": "Proxy de 1 000 unités", "mode": "proxy", "budget": 1000}
+  ]
+}

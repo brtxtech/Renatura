@@ -1,0 +1,5 @@
+/** Pure selection functions shared with tests. No ecological inference. */
+export function pointInRing([x,y],ring){let inside=false;for(let i=0,j=ring.length-1;i<ring.length;j=i++){const [xi,yi]=ring[i],[xj,yj]=ring[j];if(((yi>y)!==(yj>y))&&(x<(xj-xi)*(y-yi)/(yj-yi)+xi))inside=!inside}return inside}
+export function pointInGeometry(p,g){if(!g)return false;if(g.type==='Polygon')return pointInRing(p,g.coordinates[0])&&!g.coordinates.slice(1).some(r=>pointInRing(p,r));if(g.type==='MultiPolygon')return g.coordinates.some(coordinates=>pointInGeometry(p,{type:'Polygon',coordinates}));return false}
+const searchable=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase();
+export function layerMatches(l,f){const q=searchable(f.q||'');return (f.includeUnmapped||l.map_count>0)&&(!q||searchable(JSON.stringify([l.name,l.categories,l.entry_ids,l.use_cases])).includes(q))&&(!f.category||l.category_ids.includes(f.category))&&(!f.status||l.status===f.status)&&(!f.origin||(f.origin==='FILE'?l.kind==='FILE':l.kind!=='FILE'))}

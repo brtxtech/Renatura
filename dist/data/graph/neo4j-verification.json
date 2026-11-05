@@ -1,0 +1,51 @@
+{
+  "engine": "Neo4j Community 5.26.32",
+  "real_database_test": "PASS",
+  "caen_layers": 61,
+  "caen_records": 168060,
+  "paths_serialized": 3,
+  "write_request_rejected": true,
+  "scope": "Caen; preferred catalogue sources; INTERSECTS_DISPLAY approximate at 30m; all other communes metadata only",
+  "top_layers": [
+    {
+      "layer": "Végétation basse permanente",
+      "records": 102187
+    },
+    {
+      "layer": "Canopée arborée",
+      "records": 63186
+    },
+    {
+      "layer": "Infrastructures végétalisées",
+      "records": 1920
+    },
+    {
+      "layer": "Surfaces en eau",
+      "records": 372
+    },
+    {
+      "layer": "Emprise bâtie",
+      "records": 111
+    },
+    {
+      "layer": "Surfaces élémentaires hydrographiques",
+      "records": 31
+    },
+    {
+      "layer": "Avis AE · Projets",
+      "records": 25
+    },
+    {
+      "layer": "Avis AE · Plans et programmes",
+      "records": 24
+    },
+    {
+      "layer": "Réservoirs de biodiversité",
+      "records": 22
+    },
+    {
+      "layer": "Voies ferrées",
+      "records": 14
+    }
+  ]
+}
