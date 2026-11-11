@@ -12,7 +12,8 @@
   header.id = 'renatura-header';
   header.innerHTML = `
     <a class="rh-brand" href="index.html">
-      renatura<small>NORMANDIE</small>
+      <svg class="rh-logo" viewBox="0 0 192 192" aria-hidden="true"><rect width="192" height="192" rx="40" fill="#173d31"/><path d="M96 151V76M96 116C40 119 35 68 40 42c55 0 73 32 56 74Zm0-35c-4-40 24-55 56-55 4 36-16 63-56 55Z" fill="none" stroke="#d2e5ac" stroke-width="10" stroke-linecap="round"/></svg>
+      <span class="rh-name">renatura<small>NORMANDIE</small></span>
     </a>
     <nav aria-label="Navigation principale">
       <a href="atlas.html">Atlas régional</a>

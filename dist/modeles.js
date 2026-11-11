@@ -87,8 +87,8 @@ function periodsChart(d) {
 }
 
 // ---------- one canvas
-function canvas(section, id, m, d) {
-  const S = steps(id, m, d), key = `renatura-models-pos-${id}`;
+function canvas(section, id, m, d, S = steps(id, m, d)) {
+  const key = `renatura-models-pos-${id}`;
   let pos = load(key), zoom = null, scale = 1, selected = 'target', moved = false;
   const L = () => Object.fromEntries(Object.keys(LAYOUT).map(k => [k, pos[k] || LAYOUT[k]]));
   const geom = (P, a, c) => {
@@ -174,6 +174,73 @@ function canvas(section, id, m, d) {
   addEventListener('resize', () => { if (zoom == null) fit(); });
 }
 
+// ---------- 4th model: species recognition from a photo (ml/train_species.py → ml/export_species_status.py)
+const pct = (v, dig = 1) => (v == null ? '—' : fmt(100 * v, dig) + ' %');
+function speciesSteps(m) {
+  const trained = m.status !== 'blocked', b = m.baseline || {}, im = m.images || {}, c = m.calibration || {};
+  const after = trained ? 'good' : 'bad', total = (im.train || 0) + (im.val || 0) + (im.test || 0);
+  const groups = m.per_group || [];
+  return {
+    sources: { icon: 'SRC', title: 'Sources de données', state: trained ? 'good' : 'bad', footer: 'photos réelles',
+      desc: 'Photos d’observations naturalistes iNaturalist / GBIF prises en Normandie', inner: trained ? `${fmt(total)} photos · ${fmt(m.classes)} espèces` : '—',
+      detail: `<ul><li>iNaturalist / GBIF : photos d’observations géolocalisées en Normandie</li><li>Licence et auteur conservés pour chaque photo (CREDITS.csv)</li>
+        <li>${fmt(total)} photos, ${fmt(m.classes)} espèces de ${fmt(groups.length)} groupes</li></ul>
+        <div class="note">Les mêmes observations alimentent la carte « Observations &amp; images ».</div>` },
+    variables: { icon: 'IMG', title: 'Entrée : la photo', state: after, footer: 'pixels RVB',
+      desc: 'L’image seule : aucune position, date ni métadonnée n’entre dans le modèle', inner: trained ? `${m.image_size} × ${m.image_size} px, couleur` : '—',
+      detail: `<p>La photo est redimensionnée à ${m.image_size} × ${m.image_size} pixels puis normalisée (moyenne et écart-type ImageNet).</p>
+        <div class="note">Le lieu et la date (EXIF) servent à placer l’observation sur la carte, jamais à deviner l’espèce.</div>` },
+    target: { icon: 'Y', title: 'Cible observée', state: trained ? 'good' : 'bad', footer: 'nom d’espèce',
+      desc: 'Espèce portée par l’observation iNaturalist / GBIF', inner: `classification · ${fmt(m.classes)} classes`,
+      detail: `<p>Pour chaque photo, l’espèce indiquée par l’observation d’origine (nom scientifique, relié à TAXREF).</p>
+        <div class="note">L’étiquette vient des observateurs et de la communauté iNaturalist, pas de Renatura : elle peut contenir des erreurs.</div>` },
+    split: { icon: 'T/T', title: 'Découpage apprentissage / test', state: after, footer: 'par observation',
+      desc: 'Les photos d’une même observation restent dans le même lot', inner: trained ? `${fmt(im.train)} · ${fmt(im.val)} · ${fmt(im.test)}` : '—',
+      detail: `<div class="k">apprentissage</div><p>${fmt(im.train)} photos (70 %)</p><div class="k">validation (choix de l’époque)</div><p>${fmt(im.val)} photos (15 %)</p>
+        <div class="k">test (utilisé une seule fois)</div><p>${fmt(im.test)} photos (15 %)</p>
+        <div class="note">Découpage par espèce et par observation : deux photos quasi identiques ne peuvent pas se retrouver l’une en apprentissage, l’autre en test.</div>` },
+    algo: { icon: 'CNN', title: 'Modèle appris', state: trained ? 'good' : 'warn', footer: 'PyTorch · timm',
+      desc: 'EfficientNet-B0 pré-entraîné (ImageNet), réentraîné sur les espèces normandes', inner: trained ? `${m.epochs} époques · ${m.arch}` : 'non entraîné',
+      detail: `<p>${esc(m.arch || 'efficientnet_b0')}, ${fmt(m.epochs)} époques, AdamW + OneCycle. Meilleure époque choisie sur la validation (${pct(m.val_top1_best)} en top-1).</p>
+        ${m.history?.length ? `<div class="k">top-1 en validation par époque</div>${bars(m.history.map(h => ({ label: 'Époque ' + h.epoch, v: h.val_top1 })), v => pct(v), 1)}` : ''}` },
+    baseline: { icon: 'REF', title: 'Référence simple', state: after, footer: 'à battre',
+      desc: b.name || '—', inner: trained ? `top-1 ${pct(b.top1, 2)}` : '—',
+      detail: `<p>${esc(b.name || '')}</p><p>Hasard pur : ${pct(b.chance_top1, 2)} (1 chance sur ${fmt(m.classes)}).</p>` },
+    validation: { icon: 'VAL', title: 'Validation', state: trained ? 'warn' : 'bad', footer: 'top-1 · top-5',
+      desc: trained ? 'Bat nettement la référence, mais se trompe encore souvent' : 'Pas de validation possible',
+      inner: trained ? `top-1 ${pct(m.test_top1, 0)} · top-5 ${pct(m.test_top5, 0)}` : '—',
+      detail: !trained ? `<div class="note bad">${esc(m.reason || 'Modèle non entraîné')}</div>` : `
+        <div class="k">bonne espèce en 1ʳᵉ réponse (top-1)</div>${bars([{ label: 'Modèle', v: m.test_top1 }, { label: 'Référence', v: b.top1, base: true }], v => pct(v), 1)}
+        <div class="k">bonne espèce parmi les 5 propositions (top-5)</div>${bars([{ label: 'Modèle', v: m.test_top5 }, { label: 'Référence', v: b.top5, base: true }], v => pct(v), 1)}
+        <div class="k">top-1 par groupe (photos de test)</div>${bars(groups.map(g => ({ label: `${g.group} (${g.images})`, v: g.top1 })), v => pct(v, 0), 1)}
+        <div class="k">confiance ≥ ${pct(c.threshold, 0)} : acceptation automatique</div>
+        <p>Sur le test, ${pct(c.test_coverage, 0)} des photos dépassent ce seuil, et la réponse est alors juste dans ${pct(c.test_precision, 0)} des cas. En dessous, un partenaire valide.</p>
+        <div class="k">confusions les plus fréquentes</div><ul>${(m.confusions || []).map(x => `<li>${esc(x.true)} → ${esc(x.pred)} (${x.count})</li>`).join('')}</ul>
+        <div class="note">Les groupes avec peu de photos de test (mousses, conifères…) ont des scores peu fiables. Les oiseaux sont les plus difficiles (${pct(groups.find(g => g.group === 'Oiseaux')?.top1, 0)}).</div>` },
+    application: { icon: 'OUT', title: 'Application', state: trained ? 'warn' : 'bad', footer: 'avec validation humaine',
+      desc: trained ? 'Propose 5 espèces pour une photo déposée' : 'Répond « Non disponible »',
+      inner: trained ? 'Page photo · API' : 'aucun chiffre produit',
+      detail: trained ? `<p>Pour une photo déposée : les 5 espèces les plus probables avec leur confiance. Position et date lues dans la photo, visages floutés.</p>
+        <ul><li>Page : <a href="photos-normandie.html">Identifier une photo</a> (service sur le port 8090)</li><li>API : <code>POST /api/nature/photos</code></li>
+        <li>Lancer : <code>.venv-normandie/bin/python -m uvicorn pipeline.nature.server:app --port 8090</code></li></ul>` : '<p>Le service répond « modèle non disponible ».</p>' },
+  };
+}
+
+async function speciesModel() {
+  try {
+    const r = await fetch('data/normandie/species_model_status.json', { cache: 'no-store' });
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const m = await r.json(), sec = document.createElement('section');
+    sec.className = 'card model';
+    sec.innerHTML = `<div class="model-head"><h2>SpeciesPhoto</h2>${badge(m)}<code>species_photo</code></div>
+      <p class="question">Quelle espèce figure sur cette photo ?</p><div class="layout"><aside class="inspector" aria-live="polite"></aside><div class="graph"></div></div>`;
+    $('#models').append(sec);
+    canvas(sec, 'species_photo', m, {}, speciesSteps(m));
+  } catch (e) {
+    console.info(`Modèle photo indisponible (${e.message}) : lancer ml/export_species_status.py.`);
+  }
+}
+
 function badge(m) {
   if (m.status === 'blocked') return '<span class="badge bad">Bloqué · cible manquante</span>';
   return m.status === 'performant' ? '<span class="badge ok">Performant · bat nettement la référence</span>'
@@ -200,3 +267,4 @@ try {
   $('#status').hidden = false;
   $('#status').textContent = `Statut des modèles indisponible (${e.message}) : lancer python -m pipeline.renatura_ai.run_normandie.`;
 }
+await speciesModel();

@@ -564,3 +564,7 @@ TOOLS += [{'type': 'function', 'function': {'name': 'search_knowledge',
                    "méthode de calcul, documents ajoutés par l'équipe. À utiliser pour toute question qualitative.",
     'parameters': {'type': 'object', 'properties': {'query': {'type': 'string'}, 'k': {'type': 'integer'}}, 'required': ['query']}}}]
 FUNCS.update(search_knowledge=search_knowledge)
+
+
+# ---------------------------------------------------------------- whole atlas, prices / benefit per euro, climate summary
+from . import atlas_tools  # noqa: E402,F401  (registers atlas_layers, atlas_zone, atlas_objects, price_benefit, climate_summary)

@@ -40,9 +40,9 @@ async function documents() {
       <td><b>${esc(x.title)}</b><br><span class="micro">${esc(x.category || '')}${x.source ? ' · ' + esc(x.source.replace(/^corpus:/, '')) : ''}</span></td>
       <td><span class="tag ${esc(x.origin)}">${esc(ORIGIN[x.origin] || x.origin)}</span></td>
       <td class="n">${fmt(x.n_chunks)}</td>
-      <td class="n"><button data-view="${esc(x.id)}">Voir</button>
+      <td class="act"><div class="acts"><button data-view="${esc(x.id)}">Voir</button>
         <button data-toggle="${esc(x.id)}" data-on="${x.enabled ? 0 : 1}">${x.enabled ? 'Désactiver' : 'Activer'}</button>
-        <button class="danger" data-del="${esc(x.id)}" data-title="${esc(x.title)}">Supprimer</button></td></tr>`).join('')
+        <button class="danger" data-del="${esc(x.id)}" data-title="${esc(x.title)}">Supprimer</button></div></td></tr>`).join('')
     || '<tr><td colspan="4">Aucun document. Lancer « python -m pipeline.assistant.knowledge build » pour importer le corpus.</td></tr>';
   document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => view(b.dataset.view).catch(fail));
   document.querySelectorAll('[data-toggle]').forEach(b => b.onclick = () =>

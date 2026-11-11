@@ -1,5 +1,5 @@
 /* Versioned same-origin cache. No background computation or telemetry. */
-const VERSION = 'renatura-catalog-graph-20261111-v7';
+const VERSION = 'renatura-catalog-graph-20261111-v8';
 const CORE = [
   './', './index.html', './styles.css', './app.js', './core.js', './i18n.js',
   './orientation.js', './orientation.css', './catalog-ui.js', './custom-data.js', './data/orientation/cities.json',

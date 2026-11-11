@@ -7,3 +7,13 @@
 aside{overflow-x:hidden;min-width:0}.filters select{width:0;flex:1;min-width:0}.filters select:first-child{flex:1.2}.layer-name{min-width:0;overflow-wrap:anywhere}.map-toolbar{flex-wrap:wrap}.toolbar-buttons{display:flex;gap:7px;flex-wrap:wrap}
 .catalog-theme{border-bottom:1px solid var(--line);padding:8px 0}.catalog-theme>summary{font-size:12px;font-weight:750;color:#214d3a;cursor:pointer;list-style-position:outside;margin-left:13px}.catalog-group{margin:9px 0 9px 8px;border-left:2px solid #dfe7d7;padding-left:10px}.catalog-group>summary{cursor:pointer;font-size:11px;font-weight:650;padding:4px 0}.catalog-group>summary span{font-size:9px;color:#78836f}.variant-controls label{font-size:10px;margin:8px 0}.variant-controls select{margin-top:4px;padding:7px;font-size:10px}.variant-controls fieldset{border:1px solid #dce5d5;padding:7px;margin-top:8px;font-size:10px}.variant-controls fieldset label{display:inline-flex;align-items:center;gap:4px;margin:4px}.catalog-group .layer{padding:10px 0}.catalog-group .layer-main{gap:7px}.catalog-group .layer-name{font-size:11px}.catalog-group .layer-meta{margin-left:21px}.zoom-note{margin:5px 0 0 21px}
 header nav{flex-wrap:wrap;row-gap:0}header nav a,header nav button{white-space:nowrap}@media(max-width:740px){header{height:auto;min-height:65px;flex-wrap:wrap;padding:8px 15px}header nav{order:2;width:100%;justify-content:space-between;gap:10px}header .brand{font-size:22px}main{height:calc(100dvh - 100px)}aside{top:100px}header nav a[href="index.html"]{font-size:10px}header nav a[href="index.html"]::after{content:none}}
+
+/* Selected layers in yellow, and their group and theme too, so a choice is easy to find in the tree */
+.catalog-theme.has-selected>summary{background:#fff3b0;border-radius:4px;padding:3px 6px;margin-left:13px}
+.catalog-group.has-selected{border-left-color:#e3c12f}
+.catalog-group.has-selected>summary{background:#fff3b0;border-radius:4px;padding:4px 6px}
+.layer.is-selected{background:#ffe866;border-radius:5px;padding-left:6px;padding-right:6px;border-top-color:transparent}
+.layer.is-selected .layer-name{font-weight:650}
+.section-actions{display:flex;gap:12px;align-items:center}
+.text-button.reset{color:#8a5a12;font-weight:650}
+.filters{display:flex;flex-direction:column;align-items:stretch;gap:7px}.filters select,.filters select:first-child{width:100%;flex:none;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:28px}.filters .check{flex:none;padding:4px 2px;font-size:11px;white-space:normal}

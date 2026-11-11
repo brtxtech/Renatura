@@ -7,8 +7,8 @@
   box-sizing: border-box !important;
   display: flex !important;
   align-items: center !important;
-  gap: 28px !important;
-  padding: 0 24px !important;
+  gap: 16px !important;
+  padding: 0 12px !important;
   margin: 0 !important;
   background: #fbfbf5 !important;
   color: #173d31 !important;
@@ -23,7 +23,17 @@
   font-size: 25px !important;
   font-weight: 700 !important;
   line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
 }
+#renatura-header .rh-logo {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 auto !important;
+  display: block !important;
+}
+#renatura-header .rh-name { display: block !important; }
 #renatura-header .rh-brand small {
   display: block !important;
   margin-top: 6px !important;
@@ -33,7 +43,7 @@
 #renatura-header nav {
   display: flex !important;
   align-items: center !important;
-  gap: 22px !important;
+  gap: 18px !important;
   overflow-x: auto !important;
   min-width: 0 !important;
   margin: 0 !important;
@@ -77,11 +87,15 @@ html {
 #renatura-page-tools .top-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
 @media (max-width: 700px) {
   #renatura-header {
-    gap: 18px !important;
-    padding: 0 12px !important;
+    gap: 12px !important;
+    padding: 0 8px !important;
   }
   #renatura-header .rh-brand {
     font-size: 20px !important;
+  }
+  #renatura-header .rh-logo {
+    width: 30px !important;
+    height: 30px !important;
   }
 }
 
@@ -103,3 +117,6 @@ html {
 #rh-explorer-panel a b { display: block !important; font: 600 14px system-ui, sans-serif !important; color: #173d31 !important; margin-bottom: 2px !important; }
 #rh-explorer-panel a:hover { background: #eef3ec !important; }
 #rh-explorer-panel a.current { background: #e3f2ea !important; }
+/* Navigation aligned to the right, opposite the logo */
+#renatura-header { gap: 16px !important; padding: 0 60px 0 12px !important; }
+#renatura-header nav { gap: 16px !important; margin-left: auto !important; }

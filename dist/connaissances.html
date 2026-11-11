@@ -6,7 +6,7 @@
   <title>Renatura · Connaissances</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="extensions.css">
-  <link rel="stylesheet" href="shared-header.css">
+  <link rel="stylesheet" href="shared-header.css?v=4">
   <script defer src="shared-header.js"></script>
   <style>
     .kgrid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -25,6 +25,11 @@
     .docs th, .docs td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
     .docs td.n { text-align: right; white-space: nowrap; }
     .docs tr.off td { color: #9aa79f; }
+    .table-scroll { overflow-x: auto; max-width: 100%; }
+    .docs td:first-child { overflow-wrap: anywhere; }
+    .docs td.act { width: 1%; white-space: normal; }
+    .docs td.act .acts { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; min-width: 92px; }
+    .docs td.act button { margin: 0; white-space: nowrap; }
     .docs button { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 3px 8px; font: inherit; font-size: 12px; cursor: pointer; }
     .docs button.danger { color: var(--bad); }
     .tag { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; background: var(--chip); color: var(--ink); }

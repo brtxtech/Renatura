@@ -106,6 +106,7 @@ $('#input').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shift
 $('#input').addEventListener('input', e => { e.target.style.height = 'auto'; e.target.style.height = Math.min(160, e.target.scrollHeight) + 'px'; });
 $('#examples').innerHTML = EXAMPLES.map(q => `<button type="button">${esc(q)}</button>`).join('');
 $('#examples').querySelectorAll('button').forEach(b => b.addEventListener('click', () => send(b.textContent)));
+document.querySelectorAll('.models-help .ask').forEach(b => b.addEventListener('click', () => { $('#messages').scrollIntoView({ behavior: 'smooth', block: 'center' }); send(b.textContent); }));
 $('#clear').addEventListener('click', () => { history.length = 0; $('#messages').innerHTML = ''; welcome(); });
 function welcome() {
   add('bot', 'Bonjour ! Posez une question sur une commune, une maille (ex. H1_538_6422) ou un indice, ou joignez une photo de terrain avec le bouton Photo.\nLes réponses du modèle local peuvent prendre une à deux minutes sur cet ordinateur.');

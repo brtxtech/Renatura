@@ -6,7 +6,7 @@
   <title>Renatura · Modèles IA</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="extensions.css">
-  <link rel="stylesheet" href="shared-header.css">
+  <link rel="stylesheet" href="shared-header.css?v=4">
   <script defer src="shared-header.js"></script>
   <style>
     /* same canvas as the « Ajouter des données » workflow (dist/workbench/renatura-theme.css) */
@@ -82,7 +82,7 @@
   <main class="ext" id="main">
     <div class="eyebrow">Données · apprentissage des modèles</div>
     <h1>Sur quoi apprennent les modèles IA de Renatura.</h1>
-    <p class="lead">Trois modèles ont été développés (paquet <code>pipeline/renatura_ai</code>). Chacun est présenté comme un flux de données,
+    <p class="lead">Quatre modèles ont été développés : trois modèles territoriaux (paquet <code>pipeline/renatura_ai</code>) et un modèle de reconnaissance d’espèces sur photo (<code>ml/train_species.py</code>). Chacun est présenté comme un flux de données,
       comme l’atelier « Ajouter des données » : sources → variables → cible → découpage, puis deux branches (le modèle appris et la
       référence « rien ne change ») qui se rejoignent à la validation. Cliquer une étape pour voir son détail à gauche ; les boîtes se déplacent
       à la souris. Une étape en rouge bloque l’apprentissage : le modèle ne produit alors aucun chiffre plutôt qu’un chiffre inventé.</p>

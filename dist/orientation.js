@@ -18,6 +18,10 @@ export function attachOrientation(map,kind){
  host.classList.add('has-orientation');
  const control=document.createElement('details');control.className='orientation-control';control.innerHTML='<summary>⌖ Repères</summary><p class="cities-fixed">● Villes · toujours visibles</p>'+TRANSPORT_OPTIONS.map(o=>`<label><input type="checkbox" data-context="${o.id}" ${selected[o.id]?'checked':''}><span class="orientation-swatch" style="background:${o.color}"></span>${o.label}</label>`).join('')+'<p class="orientation-note">Réseaux OSM · arrêts détaillés en zoomant</p><p class="orientation-status" role="status"></p>';
  host.append(control);const status=control.querySelector('.orientation-status');
+ // Keep « Repères » clear of the map's +/− (and compass) buttons, wherever a page puts them.
+ const place=()=>{control.style.top='';const own=control.getBoundingClientRect();let bottom=-1;for(const z of host.querySelectorAll('.leaflet-control-zoom,.maplibregl-ctrl-group')){const r=z.getBoundingClientRect();if(r.width&&r.left<own.right&&r.right>own.left&&r.top<own.bottom+8)bottom=Math.max(bottom,r.bottom)}if(bottom>=0)control.style.top=Math.round(bottom-host.getBoundingClientRect().top+10)+'px'};
+ requestAnimationFrame(place);setTimeout(place,300);setTimeout(place,1500);addEventListener('resize',place);
+ new MutationObserver(place).observe(host.querySelector('.leaflet-control-container,.maplibregl-control-container')||host,{childList:true,subtree:true});
  control.addEventListener('pointerdown',e=>e.stopPropagation());control.addEventListener('dblclick',e=>e.stopPropagation());
  if(leaflet){L.DomEvent.disableClickPropagation(control);L.DomEvent.disableScrollPropagation(control);map.createPane('orientationNetworks');map.getPane('orientationNetworks').style.zIndex=610;map.createPane('orientationPlaces');map.getPane('orientationPlaces').style.zIndex=650;map.getPane('orientationPlaces').style.pointerEvents='none'}
  const labels=document.createElement('div');labels.className='orientation-labels';labels.setAttribute('aria-label','Villes et communes');labels.style.pointerEvents='none';(leaflet?map.getPane('orientationPlaces'):host).append(labels);

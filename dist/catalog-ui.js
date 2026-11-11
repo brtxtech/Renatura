@@ -22,15 +22,16 @@ export function renderGroupedCatalog(state,toggle,sourceDetail,saveView){
     controls.append(wrap);
    }
    groupNode.append(controls);
-   for(const layer of rows){const chosen=selected(layer,g),ids=chosen.map(l=>l.id);const active=ids.some(id=>state.active.has(id));const partial=chosen.some(l=>l.status==='PARTIAL');const row=document.createElement('article');row.className='layer';const dims=chooseVariants(layer,g).map(v=>Object.values(v.dimensions).join(' · ')).filter(Boolean).join(' / ');
+   const groupActive=g.layers.some(l=>l.variants.some(v=>v.source_ids.some(id=>state.active.has(id))));if(groupActive)groupNode.classList.add('has-selected');
+   for(const layer of rows){const chosen=selected(layer,g),ids=chosen.map(l=>l.id);const active=ids.some(id=>state.active.has(id));const partial=chosen.some(l=>l.status==='PARTIAL');const row=document.createElement('article');row.className='layer'+(active?' is-selected':'');const dims=chooseVariants(layer,g).map(v=>Object.values(v.dimensions).join(' · ')).filter(Boolean).join(' / ');
     row.innerHTML=`<div class="layer-main"><input type="checkbox" aria-label="Afficher ${esc(layer.display_name+' · '+g.display_name)}" ${active?'checked':''} ${chosen.some(l=>l.map_count)?'':'disabled'}><button class="layer-name">${esc(layer.display_name)}</button></div><div class="layer-meta"><span class="badge ${partial?'partial':''}">${partial?'Partiel':chosen.every(l=>l.kind==='FILE')?'Fichier vérifié':'Collecte complète'}</span><span class="layer-count">${fmt(chosen.reduce((s,l)=>s+l.map_count,0))} objets${dims?' · '+esc(dims):''}</span></div>${chosen.some(l=>l.map_count>50000)?'<p class="micro zoom-note">Mailles à petite échelle · objets au zoom 13+</p>':''}`;
     row.querySelector('input').onchange=async e=>{for(const m of chosen)await toggle(m,e.target.checked);saveView()};row.querySelector('button').onclick=()=>sourceDetail({...chosen[0],display_name:layer.display_name,alternative_source_ids:[...new Set(chooseVariants(layer,g).flatMap(v=>v.source_ids))],catalog_theme:theme.display_name,catalog_group:g.display_name});groupNode.append(row);shown++;themeRows++;
    }
    themeNode.append(groupNode);
   }
-  if(themeRows){themeNode.open=Boolean(themeFilter||q||only||themeNode.querySelector('details[open]'));root.append(themeNode)}
+  if(themeRows){if(themeNode.querySelector('.catalog-group.has-selected'))themeNode.classList.add('has-selected');themeNode.open=Boolean(themeFilter||q||only||themeNode.querySelector('details[open]'));root.append(themeNode)}
  }
- $('result-count').textContent=fmt(shown)+' couches thématiques · '+fmt(state.active.size)+' sources activées';if(!shown)root.innerHTML='<p class="micro">Aucune couche pour ces filtres. Les sources techniques et téléchargements restent dans Sources & méthode.</p>';
+ $('result-count').textContent=fmt(shown)+' couches thématiques · '+fmt(state.active.size)+' sources activées';if(!shown)root.innerHTML='<p class="micro">Aucune couche pour ces filtres.</p>';
  $('visible-count').textContent=fmt(state.active.size)+' sources activées · '+fmt([...state.active].reduce((s,id)=>s+(meta.get(id)?.map_count||0),0))+' objets disponibles';
 }
 export function hydrateSelections(tree,sourceIds){

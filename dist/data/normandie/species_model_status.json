@@ -1,0 +1,182 @@
+{
+ "status": "trained_exploratory",
+ "beats_baseline": true,
+ "arch": "efficientnet_b0",
+ "image_size": 192,
+ "classes": 739,
+ "images": {
+  "train": 19408,
+  "val": 4166,
+  "test": 4166
+ },
+ "epochs": 4,
+ "history": [
+  {
+   "epoch": 1,
+   "train_loss": 5.377514936859118,
+   "val_top1": 0.25324051848295726,
+   "val_top5": 0.5208833413346136,
+   "seconds": 3789
+  },
+  {
+   "epoch": 2,
+   "train_loss": 3.4278040977912014,
+   "val_top1": 0.42054728756601056,
+   "val_top5": 0.7035525684109457,
+   "seconds": 870
+  },
+  {
+   "epoch": 3,
+   "train_loss": 2.531976540228206,
+   "val_top1": 0.5014402304368699,
+   "val_top5": 0.7616418626980317,
+   "seconds": 541
+  },
+  {
+   "epoch": 4,
+   "train_loss": 2.0826586515374745,
+   "val_top1": 0.5259241478636582,
+   "val_top5": 0.7659625540086413,
+   "seconds": 506
+  }
+ ],
+ "test_top1": 0.5201632261161786,
+ "test_top5": 0.7741238598175708,
+ "val_top1_best": 0.5259241478636582,
+ "baseline": {
+  "name": "Toujours répondre l’espèce la plus photographiée (Goéland brun)",
+  "top1": 0.0014402304368698992,
+  "top5": 0.007201152184349496,
+  "chance_top1": 0.0013531799729364006
+ },
+ "per_group": [
+  {
+   "group": "Plantes à fleurs",
+   "images": 2112,
+   "top1": 0.568655303030303,
+   "top5": 0.8068181818181818
+  },
+  {
+   "group": "Oiseaux",
+   "images": 1032,
+   "top1": 0.34593023255813954,
+   "top5": 0.625
+  },
+  {
+   "group": "Insectes",
+   "images": 504,
+   "top1": 0.5734126984126984,
+   "top5": 0.873015873015873
+  },
+  {
+   "group": "Mammifères",
+   "images": 126,
+   "top1": 0.5873015873015873,
+   "top5": 0.8015873015873016
+  },
+  {
+   "group": "Poissons",
+   "images": 95,
+   "top1": 0.6210526315789474,
+   "top5": 0.8526315789473684
+  },
+  {
+   "group": "Amphibiens",
+   "images": 84,
+   "top1": 0.4880952380952381,
+   "top5": 0.7857142857142857
+  },
+  {
+   "group": "Fougères",
+   "images": 78,
+   "top1": 0.6153846153846154,
+   "top5": 0.8974358974358975
+  },
+  {
+   "group": "Mollusques",
+   "images": 59,
+   "top1": 0.7627118644067796,
+   "top5": 0.8813559322033898
+  },
+  {
+   "group": "Reptiles",
+   "images": 24,
+   "top1": 0.6666666666666666,
+   "top5": 0.8333333333333334
+  },
+  {
+   "group": "Crustacés",
+   "images": 22,
+   "top1": 0.6818181818181818,
+   "top5": 0.9090909090909091
+  },
+  {
+   "group": "Arachnides",
+   "images": 18,
+   "top1": 0.7222222222222222,
+   "top5": 0.8888888888888888
+  },
+  {
+   "group": "Conifères",
+   "images": 6,
+   "top1": 0.8333333333333334,
+   "top5": 1.0
+  },
+  {
+   "group": "Mousses",
+   "images": 6,
+   "top1": 0.6666666666666666,
+   "top5": 0.6666666666666666
+  }
+ ],
+ "calibration": {
+  "threshold": 0.7009267807006836,
+  "test_precision": 0.9443535188216039,
+  "test_coverage": 0.14666346615458473,
+  "target_precision": 0.95
+ },
+ "confusions": [
+  {
+   "true": "Phragmite des joncs",
+   "pred": "Rousserolle effarvatte",
+   "count": 4
+  },
+  {
+   "true": "Matricaire camomille",
+   "pred": "Matricaire perforée",
+   "count": 4
+  },
+  {
+   "true": "Piéride de la rave",
+   "pred": "Piéride du chou",
+   "count": 4
+  },
+  {
+   "true": "Ajonc d'Europe",
+   "pred": "Ajonc de Le Gall",
+   "count": 4
+  },
+  {
+   "true": "Orme champêtre",
+   "pred": "Charme commun",
+   "count": 4
+  },
+  {
+   "true": "Æschne bleue",
+   "pred": "Cordulégastre annelé",
+   "count": 3
+  },
+  {
+   "true": "Pipit des arbres",
+   "pred": "Pipit farlouse",
+   "count": 3
+  },
+  {
+   "true": "Crapaud commun",
+   "pred": "Calamite des joncs",
+   "count": 3
+  }
+ ],
+ "worst_classes_zero": 25,
+ "built_at": "2026-11-11T22:21:57"
+}

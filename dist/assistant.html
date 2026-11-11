@@ -6,7 +6,7 @@
   <title>Renatura · Assistant IA</title>
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="extensions.css">
-  <link rel="stylesheet" href="shared-header.css">
+  <link rel="stylesheet" href="shared-header.css?v=4">
   <script defer src="shared-header.js"></script>
   <style>
     .chat-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 16px; align-items: start; }
@@ -39,6 +39,20 @@
     .attached { grid-column: 1 / -1; font-size: 12.5px; color: var(--muted); display: flex; gap: 8px; align-items: center; }
     .attached button { height: auto; padding: 2px 8px; }
     .typing { align-self: flex-start; color: var(--muted); font-size: 13px; }
+    .models-help { margin-top: 18px; }
+    .models-help h2 { margin: 0 0 4px; font-size: 18px; }
+    .models-help h3 { margin: 18px 0 6px; font-size: 15px; }
+    .models-help p, .models-help li { font-size: 14px; line-height: 1.55; max-width: none; }
+    .models-help ul { margin: 6px 0; padding-left: 20px; }
+    .mh-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 12px; }
+    .mh-model { border: 1px solid var(--line); border-radius: 10px; padding: 12px; background: #fff; }
+    .mh-model b { display: block; font-size: 14px; }
+    .mh-model .micro { display: block; margin: 2px 0 8px; }
+    .mh-model p { margin: 0 0 8px; font-size: 13.5px; }
+    .ask { display: block; width: 100%; text-align: left; margin: 6px 0 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px;
+      background: var(--chip); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
+    .ask:hover { border-color: var(--accent); }
+    .mh-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   </style>
 </head>
 <body>
@@ -83,6 +97,91 @@
         </form>
       </section>
     </div>
+
+    <section class="card models-help" aria-labelledby="mh-title">
+      <h2 id="mh-title">Utiliser les modèles IA Renatura dans l’assistant</h2>
+      <p class="micro">Les quatre modèles de la page <a href="modeles.html">Modèles IA</a> sont des outils de l’assistant : il sait qu’ils existent,
+        les appelle lui-même quand la question les concerne, et rapporte leur réponse sans rien inventer. Les appels sont visibles sous chaque réponse.</p>
+
+      <div class="mh-grid">
+        <div class="mh-model">
+          <b>TerritoryForecast</b><span class="micro">Risque d’artificialisation · performant (AUC 0,90)</span>
+          <p>Probabilité qu’une maille s’artificialise dans les 6 ans.</p>
+          <button type="button" class="ask">Quel est le risque d’artificialisation à Bayeux ?</button>
+        </div>
+        <div class="mh-model">
+          <b>EcoVulnerability</b><span class="micro">Risque de perte d’habitat naturel · performant (AUC 0,87)</span>
+          <p>Probabilité qu’une maille perde de l’habitat naturel dans les 6 ans.</p>
+          <button type="button" class="ask">Quel est le risque de perte d’habitat naturel à Lisieux ?</button>
+        </div>
+        <div class="mh-model">
+          <b>HumanPressure</b><span class="micro">Pression humaine · performant (R² 0,73)</span>
+          <p>Population estimée (habitants/km²) depuis l’occupation du sol, comparée à la population observée INSEE 2017.</p>
+          <button type="button" class="ask">Quelle pression humaine le modèle estime-t-il à Caen ?</button>
+        </div>
+        <div class="mh-model">
+          <b>SpeciesPhoto</b><span class="micro">Reconnaissance d’espèce · exploratoire (52,6 % en top-1)</span>
+          <p>Bouton <b>Photo</b> sous la conversation : l’assistant propose l’espèce probable et 4 autres candidates, et place la photo
+            dans sa maille si elle contient des coordonnées GPS.</p>
+        </div>
+      </div>
+
+      <div class="mh-cols">
+        <div>
+          <h3>Comment poser la question</h3>
+          <ul>
+            <li>Nommez un lieu : une commune, un identifiant de maille (H1_…), ou renseignez le <b>contexte de la page</b> à gauche puis dites « ici ».</li>
+            <li>Les mots <i>risque</i>, <i>artificialisation</i>, <i>perte d’habitat</i>, <i>prévision</i>, <i>modèle</i> ou <i>population</i>
+              déclenchent l’appel aux modèles.</li>
+            <li>Pour savoir si un modèle est fiable :
+              <button type="button" class="ask">Quelle est la fiabilité des modèles IA ?</button></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Comment lire la réponse</h3>
+          <ul>
+            <li>Un risque se compare au <b>taux de base</b> : environ 1 % des mailles connaissent l’événement en 6 ans.
+              Un risque de 8 % est donc faible en absolu, mais 8 fois supérieur à la moyenne.</li>
+            <li>Les modèles voient les changements par CORINE (unité de 25 ha) : haies, mares et petites extensions ne sont pas mesurées.</li>
+            <li>Une prédiction indique <b>où</b> le changement est probable, pas une certitude. L’espèce proposée sur photo reste à confirmer par un naturaliste.</li>
+            <li>Un modèle bloqué ne donne aucun chiffre : l’assistant répond « Non disponible / données insuffisantes ».</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>Toutes les données de Renatura, accessibles à l’assistant</h3>
+      <div class="mh-grid">
+        <div class="mh-model">
+          <b>Atlas régional · 194 couches</b><span class="micro">Biodiversité, eau, occupation du sol, paysages et patrimoine, littoral,
+            énergie et climat, risques, carrières, mobilité, réglementation</span>
+          <p>Ce qui est présent autour d’un lieu, et le nom des objets (quelle ZNIEFF, quel parc éolien, quel méthaniseur…).</p>
+          <button type="button" class="ask">Y a-t-il des parcs éoliens ou des méthaniseurs près de Fécamp ?</button>
+          <button type="button" class="ask">Quels sites de paysage et de patrimoine autour d’Étretat ?</button>
+        </div>
+        <div class="mh-model">
+          <b>Prix &amp; bénéfice</b><span class="micro">DVF 2021-2025 · €/ha médian, quartiles, nombre de ventes</span>
+          <p>Prix des terres agricoles, forêts et terrains ruraux, et bénéfice de restauration par euro (RP gagné pour 10 000 €),
+            avec les meilleures mailles d’une commune ou d’un département.</p>
+          <button type="button" class="ask">Combien coûte un terrain à Lisieux et quel bénéfice par euro ?</button>
+        </div>
+        <div class="mh-model">
+          <b>Climat</b><span class="micro">ERA5 1991-2025 · tendance par décennie et test de significativité</span>
+          <p>Température, jours chauds, gel, pluie, pluie d’été, jours secs, plus longue période sèche, écart 2016-2025, et prolongation
+            de la tendance (« si la tendance continue en 2050 »).</p>
+          <button type="button" class="ask">Quelles sont les tendances du climat à Coutances ?</button>
+        </div>
+      </div>
+
+      <h3>Limites à connaître</h3>
+      <ul>
+        <li>Climat : la collecte ne couvre pour l’instant que 8 points dans l’ouest de la région (Manche). Ailleurs, l’assistant prévient
+          que le point climatique est trop éloigné. Le NDVI (verdure d’été) n’est pas encore collecté.</li>
+        <li>Les 4 modèles IA n’apprennent toujours que sur l’occupation du sol (CORINE), le bâti et les infrastructures ; l’assistant croise
+          leurs prédictions avec les autres données, mais les modèles eux-mêmes ne les utilisent pas.</li>
+        <li>Pas encore de données sur les sols, ni d’indicateur « observations par euro ». Le classement des mailles par risque des modèles
+          n’est pas encore possible ; le classement par bénéfice par euro l’est.</li>
+      </ul>
+    </section>
   </main>
   <script type="module" src="assistant.js"></script>
 </body>

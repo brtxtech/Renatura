@@ -51,6 +51,10 @@ Règles :
 - Pour justifier un score, utilise explain_index : il donne la formule, les poids et les couches.
 - Pour une question qualitative (espèce, milieu, maladie, cohabitation, méthode), utilise search_knowledge et cite les titres des passages entre crochets [ainsi]. N'affirme rien qui ne soit dans un passage ou un résultat d'outil.
 - Pour les modèles IA (risque d'artificialisation, de perte d'habitat, pression humaine), utilise run_models et model_status.
+- Tu as accès à toutes les couches de l'Atlas régional (194 couches : biodiversité, eau, occupation du sol, paysages et patrimoine, littoral, énergie et climat, risques, carrières, mobilité, réglementation) : atlas_zone pour ce qui est présent autour d'un lieu, atlas_objects pour nommer les objets d'une couche (quelle ZNIEFF, quel parc éolien…), atlas_layers pour la liste. Une couche absente n'est pas une preuve d'absence.
+- Prix des terrains (DVF 2021-2025) et bénéfice par euro (RP pour 10 000 €) : price_benefit. Cite la période, le nombre de ventes et le niveau (maille, voisinage, département) ; c'est un prix indicatif, pas une estimation.
+- Le bénéfice par euro se donne en « points de RP pour 10 000 € », jamais en euros. Ne mentionne pas les carrés de 5 km pour une question de prix.
+- Climat : climate_summary donne toutes les tendances observées d'un lieu (et le NDVI s'il est collecté) ; trend_projection prolonge un indicateur.
 - Réponds en français, de façon concise (5 à 10 lignes), avec les identifiants de mailles cités tels quels.
 Contexte de la page : {page_context}"""
 
@@ -182,6 +186,11 @@ VAR_WORDS = [(('pression',), 'P'), (('valeur ecologique', 'biodiversite'), 'V'),
 TREND_WORDS = [(('temperature', 'chaleur', 'rechauff'), 'tmean'), (('jours chauds', 'canicule'), 'hot_days'),
                (('gel',), 'frost_days'), (('pluie d ete', 'pluie estivale'), 'summer_rain_mm'), (('pluie', 'precipitation'), 'rain_mm'),
                (('secheresse', 'sec'), 'max_dry_spell'), (('bati', 'urbanisation', 'construit'), 'bati')]
+PRICE_WORDS = ('prix', 'cout', 'euro', 'benefice', 'acheter', 'achat', 'foncier', 'dvf', 'budget')
+ATLAS_WORDS = ('eolien', 'eolienne', 'methanis', 'photovolta', 'solaire', 'hydroelectri', 'geothermie', 'chaufferie', 'pcaet', 'energie',
+               'paysage', 'patrimoine', 'grand site', 'znieff', 'natura 2000', 'ramsar', 'reserve naturelle', 'biotope',
+               'masse d eau', 'piezo', 'hydrometr', 'zone vulnerable', 'captage', 'carriere', 'inondation', 'pprt', 'icpe',
+               'littoral', 'urbanisme', 'srce', 'tvb')
 KNOWLEDGE_WORDS = ('espece', 'habitat', 'milieu', 'maladie', 'cohabit', 'ecosysteme', 'faune', 'flore', 'oiseau', 'plante',
                    'arbre', 'haie', 'zone humide', 'marais', 'comment', 'pourquoi', 'qu est', 'methode', 'restaur')
 CELL_RE = re.compile(r'\bH1_\d+_\d+\b')
@@ -194,7 +203,7 @@ def _prefetch(s, question, ctx, photo):
 
     def add(name, args):
         key = (name, json.dumps(args, sort_keys=True))
-        if key not in seen and len(calls) < 3:
+        if key not in seen and len(calls) < 4:
             seen.add(key)
             calls.append((name, args))
     for cid in CELL_RE.findall(question):
@@ -222,6 +231,13 @@ def _prefetch(s, question, ctx, photo):
     target = place if 'commune' in place else ({'cell_id': CELL_RE.findall(question)[0]} if CELL_RE.findall(question) else {})
     if any(w in q for w in ('risque', 'modele', 'prevision', 'predi', 'artificialis', 'perte d habitat', 'population')) and target:
         add('run_models', target)                                   # Renatura AI predictions for the place
+    if any(w in q for w in PRICE_WORDS) and (target or dept):
+        add('price_benefit', target if 'commune' in target or 'cell_id' in target else {'departement': dept})
+    if any(w in q for w in ('climat', 'meteo')) and target and not any(n == 'trend_projection' for n, _ in calls):
+        add('climate_summary', target)
+    atlas_word = next((w for w in ATLAS_WORDS if w in q), None)
+    if atlas_word and target:
+        add('atlas_zone', {**target, 'recherche': atlas_word})
     if j is not None and not calls:
         add('commune_summary', {'commune': s.communes[j]['name']})
     knowledge = any(w in q for w in KNOWLEDGE_WORDS)

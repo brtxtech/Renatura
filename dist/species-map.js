@@ -97,7 +97,7 @@ async function loadBoundary(map) {
     const response = await fetch('data/normandie/boundary.geojson');
     if (!response.ok) return;
     const geojson = await response.json();
-    L.geoJSON(geojson, { style: { color: '#56774e', weight: 1.5, fillColor: '#e9eee4', fillOpacity: 1, dashArray: '4 3' } }).addTo(map);
+    L.geoJSON(geojson, { style: { color: '#56774e', weight: 1.5, fill: false, dashArray: '4 3' } }).addTo(map);
   } catch { /* Boundary is decorative context only; map still works without it. */ }
 }
 
@@ -112,7 +112,8 @@ async function init() {
   renderStatusFilter(records);
   $('#sp-stat').textContent = `${records.length.toLocaleString('fr-FR')} / ${records.length.toLocaleString('fr-FR')} observations affichées`;
 
-  const map = L.map('sp-map', { preferCanvas: true, zoomSnap: 0.25, attributionControl: false });
+  const map = L.map('sp-map', { preferCanvas: true, zoomSnap: 0.25 });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
   const bounds = L.latLngBounds(records.map((r) => [r.lat, r.lon]));
   map.fitBounds(bounds, { padding: [30, 30] });
 
