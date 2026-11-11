@@ -129,3 +129,9 @@ main { max-width: 1800px; }
 .port { width: 14px; height: 14px; margin-top: -7px; }
 .port.in { left: -8px; } .port.out { right: -8px; }
 .n8n-legend { font-size: 13px; }
+
+/* drag & drop of workflow boxes */
+.box.n8n-node { cursor: grab; touch-action: none; user-select: none; }
+.box.n8n-node button { cursor: pointer; }
+.box.n8n-node.dragging { cursor: grabbing; z-index: 5; transition: none !important; transform: none !important;
+  box-shadow: 0 14px 30px rgba(23, 61, 49, .22) !important; opacity: .96; }

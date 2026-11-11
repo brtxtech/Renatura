@@ -11,13 +11,14 @@ export function normaliseWeights(values) {
   return values.map(v => v / sum);
 }
 
-export function scoreSite(site, weights, partial = false) {
+export function scoreSite(site, weights, partial = false, minimumV = 10) {
   const normal = normaliseWeights(weights);
   const available = KEYS.map(key => Number.isFinite(site[key]));
   const coverage = available.filter(Boolean).length * 25;
   const weightedCoverage = normal.reduce((sum, weight, i) => sum + (available[i] ? weight : 0), 0);
   const complete = available.every((yes, i) => yes || normal[i] === 0);
-  const eligible = Number.isFinite(site.V) && site.V >= 10;
+  // minimumV: pilot method keeps V >= 10 (no structure left to restore); the regional explorer passes 0
+  const eligible = Number.isFinite(site.V) && site.V >= minimumV;
   if (!eligible || weightedCoverage === 0 || (!partial && !complete)) {
     return { score: null, coverage, partial: !complete, eligible: false };
   }
@@ -25,8 +26,8 @@ export function scoreSite(site, weights, partial = false) {
   return { score: sum / weightedCoverage, coverage, partial: !complete, eligible: true };
 }
 
-export function rankSites(sites, weights, partial) {
-  return sites.map(site => ({ ...site, ...scoreSite(site, weights, partial) }))
+export function rankSites(sites, weights, partial, minimumV = 10) {
+  return sites.map(site => ({ ...site, ...scoreSite(site, weights, partial, minimumV) }))
     .filter(site => Number.isFinite(site.score))
     .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }

@@ -55,3 +55,8 @@ svg.chart text { font-size: 10px; fill: var(--muted); }
 /* embedded inside another page (data.html photos tab) */
 html.embedded main.ext { padding-top: 8px; }
 html.embedded body > header { display: none; }
+
+/* commune page: why these values */
+#why h4 { margin: 10px 0 2px; font-size: 13px; }
+#why .why-list { margin: 2px 0 6px; padding-left: 18px; font-size: 12.5px; line-height: 1.45; }
+#why .why-list small { color: #6b7a6e; }

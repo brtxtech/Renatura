@@ -57,7 +57,9 @@ def start_batch(raw,filename,reference,element_type,category_id,source_uri='',ca
     key=uuid.uuid4().hex;directory=db.DATA/'uploads';directory.mkdir(exist_ok=True);(directory/(key+'.bin')).write_bytes(raw)
     b={'id':key,'reference':reference.strip()[:200],'filename':filename.split('/')[-1].split('\\')[-1][:200] or 'upload','element_type':element_type,'category_id':category_id,'category_name':category['name'],'catalog_id':catalog_id or None,'source_uri':source_uri[:1000],'origin':origin,'collection_state':collection_state,'expected_schema':schema,'required_fields':[v.strip() for v in required_fields.split(',') if v.strip()],'state':'queued','stored_file':key+'.bin','sha256':hashlib.sha256(raw).hexdigest(),'size_bytes':len(raw),'created_at':now(),'accepted_count':0,'rejected_count':0}
     db.put('batches',key,b);db.event(key,'intake',f"{origin} received: {b['reference']} · {b['filename']} · {len(raw)} bytes · sha256 {b['sha256'][:16]}")
-    job=workflow.create({'batch_id':key},order=['reference','type_check','detection','validation','routing'])
+    # Species detection only makes sense on a photo: other references go straight from type check to validation.
+    order=['reference','type_check']+(['detection'] if element_type=='image' else [])+['validation','routing']
+    job=workflow.create({'batch_id':key},order=order)
     # Merge to avoid overwriting a state already advanced by a worker.
     latest=found('batches',key);latest['job_id']=job;db.put('batches',key,latest)
     return {'batch_id':key,'job_id':job}

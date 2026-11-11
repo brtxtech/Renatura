@@ -50,7 +50,7 @@
     <div id="status" class="notice" hidden style="margin-top:12px"></div>
     <div class="grid2" style="margin-top:14px">
       <div class="card"><div id="map" class="map"></div>
-        <div class="legend" style="margin-top:8px"><span>0</span><i style="background:#e6e9b4"></i><i style="background:#a5c784"></i><i style="background:#659d70"></i><i style="background:#326f59"></i><i style="background:#164538"></i><span>100 · plus foncé = valeur plus élevée de l’indicateur · gris = non éligible (V &lt; 10) ou donnée absente</span></div></div>
+        <div class="legend" style="margin-top:8px"><span>0</span><i style="background:#e6e9b4"></i><i style="background:#a5c784"></i><i style="background:#659d70"></i><i style="background:#326f59"></i><i style="background:#164538"></i><span>100 · plus foncé = valeur plus élevée de l’indicateur · gris = donnée absente ; pas de carré = mer ou hors Normandie</span></div></div>
       <div>
         <div class="card" id="summary"><p class="muted">Choisir une commune pour lancer l’analyse.</p></div>
         <div class="card" id="square" style="margin-top:14px" hidden></div>
@@ -63,7 +63,7 @@
         <li>Base : les 30 850 mailles régionales de 1 km² de l’explorateur Normandie (V, D, P, O calculés à partir de 74 couches de l’atlas).</li>
         <li>Une maille de taille <i>s</i> km regroupe les mailles de 1 km² dont le centre tombe dans le carré Lambert-93 correspondant.
           Chaque critère = moyenne des mailles pondérée par leur surface (les valeurs absentes sont ignorées).</li>
-        <li>RP = moyenne pondérée de V, D, P, O agrégés (pondérations ci-dessus) ; non éligible si V &lt; 10, comme dans l’explorateur.</li>
+        <li>RP = moyenne pondérée de V, D, P, O agrégés (pondérations ci-dessus) ; calculé pour chaque carré disposant de données, comme dans l’explorateur (V &lt; 10 est signalé comme valeur écologique faible). Un carré de 1 km sans centre d’hexagone reçoit les valeurs de la maille de 1 km² qui couvre son centre.</li>
         <li>Résolution minimale : 1 km. Descendre sous 1 km demanderait de recalculer les critères à partir des couches de l’atlas.</li>
         <li>« Commune + X km » : emprise rectangulaire de la commune élargie de X km.</li>
       </ul>

@@ -114,9 +114,9 @@ class UploadTypes(unittest.TestCase):
         print(f"\n  model on {photo.parent.name}: proposed {record['species_scientific_name']} "
               f"({record['detection_confidence']:.0%}, {record['detection_status']})")
 
-    def test_detection_step_is_not_applicable_to_tables(self):
+    def test_detection_step_only_runs_for_images(self):
         b = self.upload('mini.csv', b'a,b\n1,2\n', 'json')
-        self.assertEqual(b['detection']['status'], 'not_applicable')
+        self.assertNotIn('detection', b)
         self.assertEqual(b['state'], 'ready')
 
     def test_corrupt_image_is_blocked(self):

@@ -3,3 +3,14 @@
 
 /* Le fond de page et les contrôles restent ceux du pilote. */
 #map{min-height:420px}.regional-catalog input{max-width:100%}
+
+/* Scenario: list of retained cells */
+.selected-sites { margin-top: 14px; }
+.selected-sites ol { list-style: none; margin: 6px 0 0; padding: 0; max-height: 320px; overflow-y: auto; border: 1px solid rgba(0,0,0,.08); border-radius: 8px; }
+.selected-sites li + li { border-top: 1px solid rgba(0,0,0,.06); }
+.selected-sites button { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 8px; align-items: center; width: 100%; padding: 7px 9px; background: none; border: 0; text-align: left; font: inherit; cursor: pointer; color: inherit; }
+.selected-sites button:hover, .selected-sites button:focus-visible { background: rgba(46,94,62,.08); }
+.selected-sites .site-rank { font-size: 11px; color: #6b7a6e; text-align: right; }
+.selected-sites .site-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.selected-sites small { display: block; font-size: 11px; color: #6b7a6e; }
+.selected-sites .site-score { text-align: right; font-size: 13px; }

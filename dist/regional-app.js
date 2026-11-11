@@ -3,6 +3,8 @@ import {
   formatNumber, escapeHTML as e, csvCell, sameWeights,
 } from './core.js';
 import { copy } from './regional-i18n.js';
+// Regional explorer: every cell with data gets a score; low V is shown as a note instead of hiding the cell.
+const REGIONAL_MIN_V = 0;
 import { AtlasMap } from './regional-map.js';
 import { methodology, pressureMethodology, sourcesPage } from './regional-documents.js';
 
@@ -74,6 +76,27 @@ async function loadCells() {
     console.info(`Full cells file used (${error.message})`);
     state.lightCells = false;
     return readLargeJSON('cells.geojson');
+  }
+}
+
+// Regional cells carry a placeholder name ("Maille régionale H1_…"): resolve the real commune from the
+// cell -> commune index built by tools/normandie/build_display.py (cells_points.json). Non-blocking.
+async function applyCommuneNames(collection) {
+  try {
+    const points = await readLargeJSON('cells_points.json');
+    const index = new Map(points.id.map((id, i) => [id, points.commune[i]]));
+    for (const { properties: site } of collection.features) {
+      const c = points.communes[index.get(site.id)];
+      if (c && (!site.commune || site.commune.startsWith('Maille'))) {
+        site.commune = c.name;
+        site.commune_codes = [c.insee];
+      }
+    }
+    renderRanking();
+    renderResult();
+    if (state.selected) showDetail(state.selected, false);
+  } catch (error) {
+    console.info(`Commune names unavailable (${error.message})`);
   }
 }
 
@@ -231,7 +254,7 @@ function exploratoryIndex(site) {
 
 function metricValue(site) {
   if (state.metric === 'EXPLORATORY') return exploratoryIndex(site);
-  if (state.metric === 'RP') return scoreSite(site, state.weights, state.partial).score;
+  if (state.metric === 'RP') return scoreSite(site, state.weights, state.partial, REGIONAL_MIN_V).score;
   if (state.metric === 'PP') return null;
   if (state.metric === 'betweenness') return Number.isFinite(site.betweenness) ? site.betweenness * 100 : null;
   if (state.metric === 'CTX') return site.context_score;
@@ -248,7 +271,7 @@ function recalculate() {
     return (!query || name.includes(query)) && site.coverage >= state.confidence
       && (state.minimum === 0 || (Number.isFinite(value) && value >= state.minimum));
   });
-  state.ranked = rankSites(state.filtered, state.weights, state.partial);
+  state.ranked = rankSites(state.filtered, state.weights, state.partial, REGIONAL_MIN_V);
   const filteredIds = new Set(state.filtered.map(site => site.id));
   const selected = new Set(state.scenario && !state.scenarioStale ? state.scenario.selected : []);
   const collection = {
@@ -297,7 +320,7 @@ async function showDetail(id, fly = true) {
   const site = feature.properties;
   await ensureDetail(site);  // light mode: evidence & metrics loaded for this cell only
   if (state.selected !== id) return;  // another cell was clicked meanwhile
-  const score = scoreSite(site, state.weights, state.partial);
+  const score = scoreSite(site, state.weights, state.partial, REGIONAL_MIN_V);
   const panel = $('#detail-panel');
   const en = state.language === 'en';
   panel.innerHTML = `
@@ -306,20 +329,22 @@ async function showDetail(id, fly = true) {
     <h3>${e(site.commune)}</h3>
     <p class="micro">${num(site.area_ha, 1)} ha · ${num(site.coverage)}% ${text('coverage').toLowerCase()}</p>
     <div class="detail-score">${num(score.score, 1)} <small>/100 · ${text('score')}</small></div>
+    ${Number.isFinite(site.V) && site.V < 10 ? `<p class="micro" style="color:#9a5b16">${en ? 'Low ecological value (V < 10): little natural structure left in this cell.' : 'Valeur écologique faible (V < 10) : peu de structure naturelle restante dans cette maille.'}</p>` : ''}
     ${KEYS.map((key, i) => `
       <div class="breakdown-row">
         <div><span>${key} · ${e(text('breakdown')[i])}</span><strong>${num(site[key])}</strong></div>
         <div class="breakdown-track ${Number.isFinite(site[key]) ? '' : 'is-missing'}" title="${Number.isFinite(site[key]) ? '' : (en ? 'No data for this cell' : 'Donnée absente pour cette maille')}">${Number.isFinite(site[key]) ? `<i style="width:${site[key]}%"></i>` : ''}</div>
       </div>`).join('')}
     <p class="micro">${en ? 'Displayed criteria use observations covering this cell. Inspect provenance and missing criteria below.' : 'Les critères affichés sont calculés uniquement à partir des observations couvrant cette maille. Consulter les sources et les critères manquants ci-dessous.'}</p>
-    <dl class="detail-raw">
+    ${[site.hedge_1947_m, site.hedge_2010_m, site.hedge_2016_m, site.woodland_ha].some(Number.isFinite) ? '' : '<!-- no pilot hedge observation in this cell -->'}
+    <dl class="detail-raw" ${[site.hedge_1947_m, site.hedge_2010_m, site.hedge_2016_m, site.woodland_ha].some(Number.isFinite) ? '' : 'hidden'}>
       <dt>${en ? 'Hedgerows' : 'Haies'} 1947</dt><dd>${num(site.hedge_1947_m)} m</dd>
       <dt>${en ? 'Hedgerows' : 'Haies'} ${e(site.observation_years?.before || 2010)}</dt><dd>${num(site.hedge_2010_m)} m</dd>
       <dt>${en ? 'Hedgerows' : 'Haies'} ${e(site.observation_years?.after || 2016)}</dt><dd>${num(site.hedge_2016_m)} m</dd>
       <dt>${en ? 'Woodland' : 'Bois'} ${e(site.observation_years?.after || 2016)}</dt><dd>${num(site.woodland_ha, 1)} ha</dd>
       <dt>${en ? 'Betweenness' : 'Intermédiarité'}</dt><dd>${num(site.betweenness, 4)}</dd>
     </dl>
-    <p class="micro">DREAL Normandie · 1947 / 2010 / 2016 · Licence Ouverte 2.0</p>`;
+    ${[site.hedge_1947_m, site.hedge_2010_m, site.hedge_2016_m, site.woodland_ha].some(Number.isFinite) ? '<p class="micro">DREAL Normandie · 1947 / 2010 / 2016 · Licence Ouverte 2.0</p>' : `<p class="micro">${en ? 'Betweenness' : 'Intermédiarité'} : ${num(site.betweenness, 4)}</p>`}`;
   const evidence = site.evidence || {};
   panel.insertAdjacentHTML('beforeend', `<div class="regional-provenance"><h4>Sources réellement utilisées</h4>${KEYS.map(key => `<p><b>${key}</b> : ${Number.isFinite(site[key]) ? num(site[key],1) : 'absent'}</p><ul>${(evidence[key] || []).map(row => `<li>${e(state.catalogue.find(s=>s.id===row.sourceId)?.title || row.sourceId)} · ${e(row.year)} · ${e(row.metric)} : ${num(row.value,2)} ${e(row.unit)}</li>`).join('') || '<li>Pas de mesure validée couvrant cette maille.</li>'}</ul>`).join('')}<p class="micro">Référence : ${e(site.normalization_reference || state.summary.site)}. Les valeurs régionales ne sont pas extrapolées depuis Bocages.</p></div>`);
   if(Number.isFinite(site.context_score)) panel.insertAdjacentHTML('beforeend', `<p class="micro"><b>Contexte documentaire : ${num(site.context_score,1)}%</b><br>${num(site.context_layers)}/354 couches catalogue · ${num(site.context_themes)}/14 thèmes représentés sur la maille atlas 5×5 km englobante. Densité documentaire, pas un score écologique ; une absence de résultat ne prouve pas une absence d’enjeu.</p>`);
@@ -406,7 +431,28 @@ function renderResult() {
     <div class="range-title"><span>${text('baseline')}</span><strong>${num(result.baseline_objective, 1)}</strong></div>
     <div class="comparison-bar"><i style="width:${result.baseline_objective / peak * 100}%;background:#a4b59b"></i></div>
     <p class="micro">${text('upper')}: ${num(result.upper_bound, 1)} · ${text('gap')}: ${num(result.gap_percent, 1)}%</p>
+    ${selectedSitesList(result)}
     <div class="coverage-note"><span>!</span><p>${text('partialNotice')}</p></div>`;
+  $$('#scenario-result [data-site]').forEach(button => button.addEventListener('click', () => showDetail(button.dataset.site)));
+}
+
+// The retained cells, best score first: commune, cell id, priority and criteria. Click = open on the map.
+function selectedSitesList(result) {
+  const lookup = new Map(state.sites.map(site => [site.id, site]));
+  const weights = result.weights || state.weights;
+  const rows = result.selected.map(id => lookup.get(id)).filter(Boolean)
+    .map(site => ({ site, score: scoreSite(site, weights, result.allow_partial ?? state.partial, REGIONAL_MIN_V).score }))
+    .sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+  if (!rows.length) return '';
+  const cell = v => Number.isFinite(v) ? num(v) : '—';
+  return `<div class="selected-sites">
+    <div class="range-title"><span>${text('selectedList')}</span><strong>${rows.length}</strong></div>
+    <p class="micro">${text('selectedListHelp')}</p>
+    <ol>${rows.map(({ site, score }, i) => `<li><button type="button" data-site="${e(site.id)}">
+      <span class="site-rank">${i + 1}</span>
+      <span class="site-name">${e(site.commune)}<small>${e(site.id)} · ${num(site.area_ha, 1)} ha</small></span>
+      <span class="site-score"><strong>${cell(score)}</strong><small>V ${cell(site.V)} · D ${cell(site.D)} · P ${cell(site.P)} · O ${cell(site.O)}</small></span>
+    </button></li>`).join('')}</ol></div>`;
 }
 
 function startWorker() {
@@ -741,6 +787,7 @@ async function initialise() {
     }
 
     state.sites = collection.features.map(feature => feature.properties);
+    applyCommuneNames(collection);
     const rendered = recalculate();
     renderStatistics();
     renderRegionalCatalogue();
