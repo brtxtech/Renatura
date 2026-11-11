@@ -1,0 +1,5 @@
+/* Extension minimale : le reste du style est celui de Renatura original. */
+.regional-catalog{margin:18px 0;padding:12px;border:1px solid #ced7c6;border-radius:9px}.regional-catalog summary{cursor:pointer;font-weight:600}#regional-catalog{max-height:360px;overflow:auto}.regional-source{padding:10px 0;border-bottom:1px solid #d8decf;font-size:12px}.regional-source strong{display:block}.regional-source small{display:block;margin-top:4px}.regional-source mark{background:#e3edd8;padding:2px 5px}.regional-provenance{overflow:auto;max-height:280px}.regional-provenance li{font-size:12px;margin-bottom:8px}
+
+/* Le fond de page et les contrôles restent ceux du pilote. */
+#map{min-height:420px}.regional-catalog input{max-width:100%}

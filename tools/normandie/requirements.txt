@@ -1,0 +1,6 @@
+geopandas>=1.0,<2
+shapely>=2.0,<3
+pyproj>=3.6,<4
+pyogrio>=0.9,<1
+networkx>=3.4,<4
+PuLP>=2.8,<4

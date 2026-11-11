@@ -1,0 +1,18 @@
+# secrets and local environment
+.env
+.venv/
+.venv-*/
+__pycache__/
+*.pyc
+.DS_Store
+
+# large or private local data (rebuild with the scripts in tools/ and ml/)
+backups/
+datasets/
+derived/
+user-data/
+dist/data/species-images
+
+# > 100 MB (GitHub limit): the explorer loads cells.geojson.gz / cells_display.geojson.gz instead
+dist/data/normandie/cells.geojson
+dist/data/normandie/cells_detail.tmp/

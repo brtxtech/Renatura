@@ -1,0 +1,11 @@
+{
+  "catalog": "catalog.example.json",
+  "before_year": 2010,
+  "after_year": 2016,
+  "hex_area_km2": 1,
+  "min_fragment_ha": 1,
+  "normalization_reference": "Normandie — inventaires validés — version à renseigner",
+  "allow_built_pressure_proxy": false,
+  "allow_partial_sources": false,
+  "declared_layers": 223
+}

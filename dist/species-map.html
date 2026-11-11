@@ -1,0 +1,60 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renatura · Observations &amp; images</title><link rel="icon" href="icon.svg">
+<link rel="stylesheet" href="workspace.css">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<link rel="stylesheet" href="shared-header.css">
+<link rel="stylesheet" href="orientation.css">
+<link rel="stylesheet" href="species-map.css">
+<script defer src="shared-header.js"></script>
+</head><body>
+<header><a href="index.html">renatura <small>Normandie</small></a><nav aria-label="Navigation principale"><a href="atlas.html">Atlas régional</a><a href="index.html">Explorer</a><a href="graph.html">Neo4j</a><a class="active" href="species-map.html">Observations &amp; images</a><a href="data.html">Ajouter des données</a></nav></header>
+<main>
+  <div class="eyebrow">OBSERVATIONS NATURALISTES PHOTOGRAPHIÉES</div>
+  <h1>Où les espèces ont-elles été photographiées ?</h1>
+  <p id="sp-intro">Observations géolocalisées (iNaturalist / GBIF) prises en Normandie, chacune reliée à une photo réelle. Cliquez un point pour voir l’image, l’espèce et sa provenance. Les couleurs distinguent les groupes — elles n’indiquent ni abondance ni priorité de conservation. Sous la carte : les espèces menacées et protégées, puis les espèces de la zone affichée.</p>
+
+  <div class="sp-toolbar">
+    <div class="sp-filters" id="sp-filters" role="group" aria-label="Filtrer par groupe"></div>
+    <div class="sp-stat" id="sp-stat"></div>
+  </div>
+
+  <div class="sp-layout">
+    <div class="sp-map-card">
+      <div id="sp-map"></div>
+      <p class="micro sp-note">Géométries simplifiées pour l’affichage. Une observation photographiée ne mesure pas une densité de population ; l’absence de point ne prouve pas l’absence de l’espèce, seulement l’absence d’observation photographiée dans ce jeu de données.</p>
+    </div>
+    <aside class="sp-panel" id="sp-panel">
+      <div class="sp-panel-empty">Sélectionnez un point sur la carte pour afficher l’image et sa fiche.</div>
+    </aside>
+  </div>
+
+  <section class="sp-section" id="sp-threatened">
+    <div class="sp-section-head">
+      <div><div class="eyebrow">ESPÈCES MENACÉES ET PROTÉGÉES</div>
+        <h2>Espèces en danger photographiées en Normandie</h2>
+        <p class="micro">Statuts TAXREF (MNHN/INPN) : liste rouge régionale de Normandie et protection nationale. Positions des espèces sensibles affichées à ~10 km près.</p></div>
+      <div class="sp-chips" id="sp-threat-filter" role="group" aria-label="Filtrer par statut">
+        <button class="sp-chip active" data-status="threatened">Menacées (CR, EN, VU)</button>
+        <button class="sp-chip" data-status="nt">Quasi menacées (NT)</button>
+        <button class="sp-chip" data-status="protected">Protégées en France</button>
+      </div>
+    </div>
+    <div class="sp-gallery" id="sp-threat-gallery"></div>
+  </section>
+
+  <section class="sp-section" id="sp-zone">
+    <div class="sp-section-head">
+      <div><div class="eyebrow">ESPÈCES DE LA ZONE</div>
+        <h2 id="sp-zone-title">Espèces photographiées dans la zone affichée</h2>
+        <p class="micro">Mise à jour quand vous déplacez ou zoomez la carte ; respecte les groupes cochés au-dessus de la carte. Cliquez une photo pour sa fiche, un nom pour voir ses observations sur la carte.</p></div>
+    </div>
+    <div class="sp-gallery" id="sp-zone-gallery"></div>
+  </section>
+
+  <div class="sp-legend-note">
+    <h2>Provenance</h2>
+    <p class="micro">Photos et coordonnées : observations citoyennes iNaturalist et GBIF, licences Creative Commons (CC BY-NC majoritairement) — attribution affichée pour chaque image. Classement taxonomique : TAXREF (MNHN/INPN). Ce jeu de données illustre des espèces déjà présentes dans le référentiel régional ; il ne constitue pas un inventaire exhaustif ni un suivi de population.</p>
+  </div>
+</main>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="species-map.js"></script>
+</body></html>

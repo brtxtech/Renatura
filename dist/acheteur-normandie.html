@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renatura · Prix & bénéfice écologique</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="shared-header.css">
+  <script defer src="shared-header.js"></script>
+</head>
+<body>
+  <header></header>
+  <main class="ext" id="main">
+    <div class="eyebrow">Extension 2 · Futurs acquéreurs</div>
+    <h1>Prix du foncier rural et bénéfice écologique, maille par maille.</h1>
+    <p class="lead">Prix issus des ventes notariées DVF 2021–2025 (terrains ruraux non bâtis) et du barème officiel 2024 des terres agricoles ;
+      bénéfice écologique issu des critères V/D/P/O de l’explorateur Normandie. <b>Prix indicatif, pas une estimation</b> : aucune vente individuelle n’est affichée
+      et chaque chiffre repose sur au moins 5 ventes.</p>
+    <div class="grid2">
+      <div class="card">
+        <div class="row">
+          <label style="margin:0">Couleur :</label>
+          <select id="metric" style="max-width:260px">
+            <option value="price">Prix médian €/ha (agricole)</option>
+            <option value="rp">Priorité de restauration (RP)</option>
+            <option value="ratio">Bénéfice par euro (RP / 10 000 €)</option>
+          </select>
+          <input id="search" type="text" placeholder="Commune…" style="max-width:220px">
+        </div>
+        <div id="map" class="map" style="margin-top:10px"></div>
+        <div id="legend" class="legend" style="margin-top:8px"></div>
+      </div>
+      <div>
+        <div class="card" id="cardbox"><p class="muted">Cliquer une maille pour afficher sa fiche acquéreur.</p></div>
+        <div class="card" style="margin-top:14px">
+          <h3>Meilleur bénéfice par euro</h3>
+          <div class="row">
+            <div style="flex:1"><label for="maxprice">Prix max €/ha</label><input id="maxprice" type="number" value="9000" step="500"></div>
+            <div style="flex:1"><label for="minrp">RP minimum</label><input id="minrp" type="number" value="55" step="5"></div>
+          </div>
+          <div id="ranking" class="scroll" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px" id="method"></div>
+  </main>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="acheteur-normandie.js"></script>
+</body>
+</html>

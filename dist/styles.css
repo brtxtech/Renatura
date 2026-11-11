@@ -792,6 +792,9 @@ input[type=range] {
   background: var(--green);
   border-radius: 3px;
 }
+.breakdown-track.is-missing {
+  background: repeating-linear-gradient(45deg, #e8ece5, #e8ece5 4px, #d3d9ca 4px, #d3d9ca 8px);
+}
 .detail-raw {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -839,6 +842,14 @@ td button {
   text-align: left;
   color: var(--green);
   padding: 0;
+}
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.source-table th, .source-table td {
+  white-space: normal;
 }
 td small {
   display: block;
@@ -1009,4 +1020,27 @@ td small {
   .scenario-panel { break-before: page; }
   .map-container { height: 550px; }
   .document-page { padding: 0; }
+}
+
+/* normandie-header-patch */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+}
+.main-nav {
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.main-nav .nav-link {
+  flex-shrink: 0;
+}
+html {
+  scroll-padding-top: 100px;
+}
+@media (max-width: 760px) {
+  html { scroll-padding-top: 170px; }
+}
+@media print {
+  .topbar { position: static; }
 }

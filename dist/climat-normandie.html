@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renatura · Climat et changements en Normandie</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="shared-header.css">
+  <script defer src="shared-header.js"></script>
+</head>
+<body>
+  <header></header>
+  <main class="ext" id="main">
+    <div class="eyebrow">Extension 3 · Climat et environnement</div>
+    <h1>Ce qui a déjà changé : climat 1991–2025, végétation 2001–2025, artificialisation 2006–2025.</h1>
+    <p class="lead">Séries historiques mesurées, stockées par point de grille et par maille de 1 km². Les tendances sont testées (Mann-Kendall) ;
+      les anomalies comparent 2016–2025 à la référence 1991–2020. Les projections (DRIAS / trajectoire de réchauffement TRACC) et l’indice de vulnérabilité viendront ensuite.</p>
+    <div id="status" class="notice" hidden></div>
+    <div class="grid2">
+      <div class="card">
+        <div class="row">
+          <label style="margin:0">Afficher :</label>
+          <select id="layer" style="max-width:340px">
+            <option value="tmean">Tendance température moyenne (°C / décennie)</option>
+            <option value="hot_days">Tendance jours ≥ 30 °C (jours / décennie)</option>
+            <option value="rain_mm">Tendance pluie annuelle (mm / décennie)</option>
+            <option value="max_dry_spell">Tendance plus longue période sèche (jours / décennie)</option>
+            <option value="ndvi_summer">Tendance NDVI d’été (/ décennie)</option>
+            <option value="built">Artificialisation 2006 → 2017, Basse-Normandie (points de % par maille)</option>
+          </select>
+        </div>
+        <div id="map" class="map" style="margin-top:10px"></div>
+        <div id="legend" class="legend" style="margin-top:8px"></div>
+      </div>
+      <div class="card" id="detail"><p class="muted">Cliquer un point de grille (ou une maille en mode artificialisation).</p></div>
+    </div>
+    <div class="card" style="margin-top:18px" id="method"></div>
+  </main>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="climat-normandie.js"></script>
+</body>
+</html>
