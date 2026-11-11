@@ -1,0 +1,26 @@
+{
+  "layers": [
+    {
+      "id": "haies-2016",
+      "canonical_id": "inventaire-haies-2016",
+      "label": "Inventaire des haies 2016",
+      "category": "biodiversite",
+      "role": "criterion",
+      "metric": "hedges_after",
+      "enabled": false,
+      "validated": false,
+      "year": 2016,
+      "local_path": "sources/haies-2016.geojson",
+      "coverage_path": "couvertures/haies-2016.geojson",
+      "coverage_complete": false,
+      "status": "COMPLETE",
+      "filters": {
+        "Nature": [
+          "haie"
+        ]
+      },
+      "source": "À renseigner",
+      "usage": "V : densité de haies ; D : longueur après."
+    }
+  ]
+}

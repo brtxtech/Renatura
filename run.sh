@@ -8,3 +8,4 @@ fi
 .venv/bin/python -m pipeline.build "$@"
 .venv/bin/python -m unittest discover -s tests -p 'test_*.py'
 printf '\nStatic app ready. Serve with: python3 -m http.server 8080 --directory dist\n'
+ 

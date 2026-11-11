@@ -1,0 +1,29 @@
+{
+  "layers": [
+    {
+      "id": "foncier-mobilisable-a-fournir",
+      "canonical_id": "foncier-mobilisable-a-fournir",
+      "label": "Foncier mobilisable documenté — fichier requis",
+      "metric": "opportunity",
+      "role": "criterion",
+      "enabled": false,
+      "validated": false,
+      "year": 2025,
+      "local_path": "sources/foncier-mobilisable.gpkg",
+      "coverage_path": "couvertures/foncier-verifie.geojson",
+      "opportunity_documented": true,
+      "filters": {
+        "autorisation_intervenir": [
+          true
+        ]
+      },
+      "validation": {
+        "reviewer": "À renseigner",
+        "date": "À renseigner",
+        "evidence": ""
+      },
+      "status": "COMPLETE",
+      "usage": "O : union des surfaces avec autorisation vérifiée / surface maille. Exemple de contrat, pas une donnée réelle."
+    }
+  ]
+}

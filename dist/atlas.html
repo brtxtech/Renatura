@@ -1,13 +1,93 @@
-<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renatura · Atlas régional de Normandie</title><meta name="description" content="Explorer les données réelles de Normandie, leur provenance et leurs intersections territoriales."><link rel="icon" href="icon.svg"><link rel="stylesheet" href="vendor/leaflet/leaflet.css"><link rel="stylesheet" href="atlas.css"><link rel="stylesheet" href="orientation.css"></head><body>
-<a class="skip" href="#map">Aller à la carte</a>
-<header><a class="brand" href="index.html"><svg width="29" height="34" viewBox="0 0 35 38" aria-hidden="true"><path d="M18 34V16M18 24C4 25 3 12 4 6c14 0 18 8 14 18Zm0-7C17 7 24 3 32 3c1 9-4 16-14 14Z" fill="none" stroke="currentColor" stroke-width="2.5"/></svg><span>renatura<small>NORMANDIE</small></span></a><nav><a class="active" href="atlas.html">Atlas régional</a><a href="index.html">Explorer · Pays d’Auge</a><a href="graph.html">Neo4j</a><a href="data.html">Ajouter des données</a><button id="sources">Sources & méthode</button></nav><span class="local">● Données embarquées</span></header>
-<main><aside id="sidebar"><div class="eyebrow">ATLAS DU TERRITOIRE</div><h1>Le territoire,<br>couche par couche.</h1><p class="intro">Explorer les milieux, identifier les enjeux et retrouver les données qui les décrivent.</p><div id="stats" class="stats" aria-live="polite">Chargement du catalogue…</div>
-<label for="commune">Rechercher une commune</label><div class="search"><span>⌕</span><input id="commune" type="search" list="communes" placeholder="Caen, Rouen, Alençon…"><datalist id="communes"></datalist></div>
-<div class="section"><h2>Couches disponibles</h2><button id="clear" class="text-button">Tout masquer</button></div>
-<label class="sr" for="search">Rechercher une couche</label><input id="search" type="search" placeholder="Éolien, zones humides, ICPE…">
-<div class="filters"><select id="category" aria-label="Catégorie"><option value="">Toutes les catégories</option></select><select id="origin" aria-label="Origine"><option value="">API et fichiers</option><option value="API">API</option><option value="FILE">Fichiers</option><option value="USER">Mes imports</option></select></div>
-<div class="filters"><select id="status" aria-label="Complétude"><option value="">Tous les états de collecte</option><option value="COMPLETE">API · complètes</option><option value="PARTIAL">API · partielles</option><option value="ERROR">API · en erreur</option><option value="FILE_VERIFIED">Fichiers vérifiés</option></select><label class="check"><input id="active-only" type="checkbox">Couches activées uniquement</label></div>
-<p id="result-count" class="micro"></p><div id="layers" class="layers"></div><p class="micro footnote">Affichage simplifié à 30 m. Les données originales restent référencées. Une extraction partielle ne permet pas de conclure à une absence.</p></aside>
-<section class="map-area" aria-label="Carte interactive de Normandie"><div class="map-toolbar"><div><b>Normandie</b><small id="visible-count">Contour régional</small></div><div class="toolbar-buttons"><input type="file" id="zone-file" accept=".geojson,.json,application/geo+json" hidden><button id="custom-zone" disabled title="Disponible avec le serveur local et l’index spatial">Importer une zone</button><button id="analyse">⌖ Analyser une maille</button><button id="home" title="Recentrer la Normandie">↗ Recentrer</button><button id="mobile-filters">☰ Couches</button></div></div><div id="map" role="region" aria-label="Carte de Normandie"></div><div id="map-error" hidden></div><div class="map-bottom"><label><input id="basemap" type="checkbox" checked>Fond OpenStreetMap</label><span id="activity" role="status">Préparation de la carte…</span></div><div id="analysis-hint" hidden>Cliquez sur la carte pour examiner une maille de 5 × 5 km.</div><section id="detail" class="detail" hidden aria-live="polite"></section></section></main>
-<dialog id="source-dialog"><button id="close-dialog" class="close" aria-label="Fermer">×</button><div class="eyebrow">DONNÉES & TRANSPARENCE</div><h2>Ce que la carte montre.</h2><div id="method"></div><div id="source-table"></div></dialog><div id="toast" role="status" hidden></div>
-<script src="vendor/leaflet/leaflet.js"></script><script type="module" src="atlas.js"></script></body></html>
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Renatura · Atlas régional de Normandie</title>
+    <meta name="description"
+        content="Explorer les données réelles de Normandie, leur provenance et leurs intersections territoriales.">
+    <link rel="icon" href="icon.svg">
+    <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="atlas.css">
+    <link rel="stylesheet" href="orientation.css">
+
+<link rel="stylesheet" href="shared-header.css">
+<script defer src="shared-header.js"></script>
+</head>
+
+<body>
+    <a class="skip" href="#map">Aller à la carte</a>
+    <header><a class="brand" href="index.html"><svg width="29" height="34" viewBox="0 0 35 38" aria-hidden="true">
+                <path d="M18 34V16M18 24C4 25 3 12 4 6c14 0 18 8 14 18Zm0-7C17 7 24 3 32 3c1 9-4 16-14 14Z" fill="none"
+                    stroke="currentColor" stroke-width="2.5" />
+            </svg><span>renatura<small>NORMANDIE</small></span></a>
+        <nav><a class="active" href="atlas.html">Atlas régional</a><a href="index.html">Explorer · Pays d’Auge</a><a
+                href="explorer-normandie/index.html">Explorer Normandie</a><a href="graph.html">Neo4j</a><a
+                href="data.html">Ajouter des données</a><button id="sources">Sources &amp; méthode</button></nav><span
+            class="local">● Données embarquées</span>
+    </header>
+    <main>
+        <aside id="sidebar">
+            <div class="eyebrow">ATLAS DU TERRITOIRE</div>
+            <h1>Le territoire,<br>couche par couche.</h1>
+            <p class="intro">Explorer les milieux, identifier les enjeux et retrouver les données qui les décrivent.</p>
+            <div id="stats" class="stats" aria-live="polite">Chargement du catalogue…</div>
+            <label for="commune">Rechercher une commune</label>
+            <div class="search"><span>⌕</span><input id="commune" type="search" list="communes"
+                    placeholder="Caen, Rouen, Alençon…"><datalist id="communes"></datalist></div>
+            <div class="section">
+                <h2>Couches disponibles</h2><button id="clear" class="text-button">Tout masquer</button>
+            </div>
+            <label class="sr" for="search">Rechercher une couche</label><input id="search" type="search"
+                placeholder="Éolien, zones humides, ICPE…">
+            <div class="filters"><select id="category" aria-label="Catégorie">
+                    <option value="">Toutes les catégories</option>
+                </select><select id="origin" aria-label="Origine">
+                    <option value="">API et fichiers</option>
+                    <option value="API">API</option>
+                    <option value="FILE">Fichiers</option>
+                    <option value="USER">Mes imports</option>
+                </select></div>
+            <div class="filters"><select id="status" aria-label="Complétude">
+                    <option value="">Tous les états de collecte</option>
+                    <option value="COMPLETE">API · complètes</option>
+                    <option value="PARTIAL">API · partielles</option>
+                    <option value="ERROR">API · en erreur</option>
+                    <option value="FILE_VERIFIED">Fichiers vérifiés</option>
+                </select><label class="check"><input id="active-only" type="checkbox">Couches activées
+                    uniquement</label></div>
+            <p id="result-count" class="micro"></p>
+            <div id="layers" class="layers"></div>
+            <p class="micro footnote">Affichage simplifié à 30 m. Les données originales restent référencées. Une
+                extraction partielle ne permet pas de conclure à une absence.</p>
+        </aside>
+        <section class="map-area" aria-label="Carte interactive de Normandie">
+            <div class="map-toolbar">
+                <div><b>Normandie</b><small id="visible-count">Contour régional</small></div>
+                <div class="toolbar-buttons"><input type="file" id="zone-file"
+                        accept=".geojson,.json,application/geo+json" hidden><button id="custom-zone" disabled
+                        title="Disponible avec le serveur local et l’index spatial">Importer une zone</button><button
+                        id="analyse">⌖ Analyser une maille</button><button id="home" title="Recentrer la Normandie">↗
+                        Recentrer</button><button id="mobile-filters">☰ Couches</button></div>
+            </div>
+            <div id="map" role="region" aria-label="Carte de Normandie"></div>
+            <div id="map-error" hidden></div>
+            <div class="map-bottom"><label><input id="basemap" type="checkbox" checked>Fond OpenStreetMap</label><span
+                    id="activity" role="status">Préparation de la carte…</span></div>
+            <div id="analysis-hint" hidden>Cliquez sur la carte pour examiner une maille de 5 × 5 km.</div>
+            <section id="detail" class="detail" hidden aria-live="polite"></section>
+        </section>
+    </main>
+    <dialog id="source-dialog"><button id="close-dialog" class="close" aria-label="Fermer">×</button>
+        <div class="eyebrow">DONNÉES & TRANSPARENCE</div>
+        <h2>Ce que la carte montre.</h2>
+        <div id="method"></div>
+        <div id="source-table"></div>
+    </dialog>
+    <div id="toast" role="status" hidden></div>
+    <script src="vendor/leaflet/leaflet.js"></script>
+    <script type="module" src="atlas.js"></script>
+</body>
+
+</html>

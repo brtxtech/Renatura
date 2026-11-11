@@ -111,16 +111,18 @@ export class AtlasMap {
   }
 
   calculateBounds(collection) {
-    const points = [];
+    // Loop instead of Math.min(...points): spreading hundreds of thousands of vertices overflows the call stack.
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     function collect(coords) {
-      if (typeof coords[0] === 'number') points.push(coords);
-      else coords.forEach(collect);
+      if (typeof coords[0] === 'number') {
+        if (coords[0] < minX) minX = coords[0];
+        if (coords[0] > maxX) maxX = coords[0];
+        if (coords[1] < minY) minY = coords[1];
+        if (coords[1] > maxY) maxY = coords[1];
+      } else coords.forEach(collect);
     }
     collection.features.forEach(feature => collect(feature.geometry.coordinates));
-    return [
-      [Math.min(...points.map(p => p[0])), Math.min(...points.map(p => p[1]))],
-      [Math.max(...points.map(p => p[0])), Math.max(...points.map(p => p[1]))],
-    ];
+    return [[minX, minY], [maxX, maxY]];
   }
 
   update(collection) {

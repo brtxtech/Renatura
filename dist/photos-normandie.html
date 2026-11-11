@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renatura · Photos nature Normandie</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="shared-header.css">
+  <script defer src="shared-header.js"></script>
+</head>
+<body>
+  <header></header>
+  <main class="ext" id="main">
+    <div class="eyebrow">Extension 1 · Photos nature</div>
+    <h1>Photographier la nature normande, reconnaître l’espèce, enrichir la carte.</h1>
+    <p class="lead">Les partenaires envoient des photos prises en Normandie. Un modèle entraîné sur 27 746 photos normandes propose l’espèce ;
+      la photo compte dans la carte seulement après confirmation (deux partenaires d’accord ou un expert). La position GPS et la date sont lues
+      puis toutes les métadonnées sont supprimées ; les visages sont floutés ; les espèces sensibles ne sont publiées qu’à 10 km près.</p>
+    <div id="service" class="notice" hidden></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="upload">Envoyer</button>
+      <button role="tab" aria-selected="false" data-tab="validate">Valider</button>
+      <button role="tab" aria-selected="false" data-tab="evidence">Preuves par maille</button>
+      <button role="tab" aria-selected="false" data-tab="model">Modèle</button>
+    </div>
+
+    <section data-panel="upload">
+      <div class="grid2">
+        <div class="card">
+          <h2>Envoyer une photo</h2>
+          <label for="key">Clé partenaire</label>
+          <input id="key" type="password" autocomplete="off" placeholder="fournie par l’équipe Renatura">
+          <label for="file">Photo (JPEG / PNG / HEIC converti, 20 Mo max)</label>
+          <input id="file" type="file" accept="image/*">
+          <div class="row">
+            <div style="flex:1"><label for="lat">Latitude (si la photo n’a pas de GPS)</label><input id="lat" type="number" step="any" placeholder="49.18"></div>
+            <div style="flex:1"><label for="lon">Longitude</label><input id="lon" type="number" step="any" placeholder="-0.37"></div>
+          </div>
+          <p class="micro">Ou cliquer sur la carte pour placer le point.</p>
+          <label for="licence">Licence de la photo</label>
+          <select id="licence"><option>CC-BY-NC</option><option>CC-BY</option><option>CC0</option><option>CC-BY-SA</option></select>
+          <label><input id="consent" type="checkbox"> J’accepte le partage de l’observation confirmée avec GBIF / iNaturalist</label>
+          <label for="note">Note (habitat, comportement…)</label>
+          <textarea id="note" rows="2"></textarea>
+          <p><button class="primary" id="send">Envoyer et reconnaître</button></p>
+          <div id="result"></div>
+        </div>
+        <div class="card"><h3>Position</h3><div id="pickmap" class="map" style="height:420px"></div></div>
+      </div>
+    </section>
+
+    <section data-panel="validate" hidden>
+      <div class="row" style="margin-bottom:12px">
+        <select id="qstatus" style="max-width:220px"><option value="pending">En attente</option><option value="auto">Auto (confiance haute)</option><option value="confirmed">Confirmées</option><option value="rejected">Rejetées</option></select>
+        <button class="secondary" id="reload">Actualiser</button>
+        <span class="micro">Valider demande une clé partenaire (onglet Envoyer).</span>
+      </div>
+      <div id="queue" class="photo-grid"></div>
+    </section>
+
+    <section data-panel="evidence" hidden>
+      <div class="grid2">
+        <div class="card"><div id="evmap" class="map"></div>
+          <div class="legend" style="margin-top:8px"><span>Espèces confirmées par maille :</span><i style="background:#c7e9c0"></i>1<i style="background:#74c476"></i>2–4<i style="background:#00441b"></i>5+</div></div>
+        <div class="card">
+          <h2>Couche « preuves photo »</h2>
+          <p class="micro">Indicateur séparé : il ne modifie pas encore V/D/P/O. Une maille sans photo n’est jamais pénalisée.
+            L’effort (observateur × jour) est affiché pour distinguer « beaucoup d’observateurs » de « beaucoup d’espèces ».</p>
+          <div id="evsummary"></div>
+          <div id="evcell" class="micro">Cliquer une maille.</div>
+        </div>
+      </div>
+    </section>
+
+    <section data-panel="model" hidden><div id="modelinfo" class="card">Chargement…</div></section>
+  </main>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="photos-normandie.js"></script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 /* Versioned same-origin cache. No background computation or telemetry. */
-const VERSION = 'renatura-catalog-graph-20261105-v5';
+const VERSION = 'renatura-catalog-graph-20261111-v7';
 const CORE = [
   './', './index.html', './styles.css', './app.js', './core.js', './i18n.js',
   './orientation.js', './orientation.css', './catalog-ui.js', './custom-data.js', './data/orientation/cities.json',
@@ -25,21 +25,17 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/') || /\/(catalog-ui|custom-data|graph|data-ingest)\.js$/.test(url.pathname) || url.pathname.includes('/data/atlas/') || url.pathname.includes('/data/orientation/') || /\/orientation\.(js|css)$/.test(url.pathname) || /\/atlas[^/]*\.(js|css)$/.test(url.pathname)) {
-    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
-    return;
-  }
-  if (event.request.mode === 'navigate') {
-    event.respondWith(fetch(event.request).catch(() => caches.match(event.request))); 
-    return;
-  }
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request).then(response => {
-    if (response.ok && (url.pathname.includes('/data/') || /\.(js|css|svg)$/.test(url.pathname))) {
+  if (url.pathname.startsWith('/api/')) return;  // never cache API answers
+  // Network first for EVERYTHING (pages, scripts, styles, data are all edited/rebuilt in place under the same
+  // names); the cache is only an offline fallback. Large data files (> 25 MB) are not copied into the cache.
+  event.respondWith(fetch(event.request).then(response => {
+    const size = Number(response.headers.get('content-length') || 0);
+    if (response.ok && size < 25e6) {
       const clone = response.clone();
       event.waitUntil(caches.open(VERSION).then(cache => cache.put(event.request, clone)));
     }
     return response;
-  })));
+  }).catch(() => caches.match(event.request)));
 });
 self.addEventListener('message', event => {
   if (event.data.type !== 'CACHE_LAYERS') return;
