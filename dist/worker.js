@@ -6,15 +6,25 @@ import {
   objective,
   baselineSelection,
   seededRandom,
-} from './core.js';
+} from './core.js?v=20261111-scenarios2';
 
 function solve(payload) {
-  const { sites, paths, weights, partial, mode, budget, lambda } = payload;
+  const { paths, weights, partial, mode, budget, lambda } = payload;
+  const minArea = Number(payload.minArea) || 0;
+  // Eligible sites: at least minArea hectares (no coastal / boundary slivers) and, for the land budget, a known price.
+  const sites = payload.sites.filter(site => (site.area_ha || 0) >= minArea
+    && Number.isFinite(siteCost(site, mode)) && siteCost(site, mode) > 0);
   if (!Number.isFinite(budget) || budget < 0 || !Number.isFinite(lambda) || lambda < 0) {
     throw new Error('Invalid budget or connectivity weight.');
   }
   const start = performance.now();
-  const ranked = rankSites(sites, weights, partial);
+  // Value of a site = restoration priority × its area (a full 1 km² cell = its RP; a 3 ha coastal or border
+  // sliver = 3 % of its RP). Without this, a hectare budget is filled with dozens of tiny slivers, because each
+  // sliver brought its full RP for almost no area (shares are relative to the largest, complete cell). rp keeps the per-cell priority for display.
+  const fullArea = Math.max(...sites.map(site => site.area_ha || 0)) || 1;  // a complete cell (100 ha in Normandy)
+  const ranked = rankSites(sites, weights, partial)
+    .map(site => ({ ...site, rp: site.score, score: site.score * (site.area_ha || 0) / fullArea }))
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
   if (!ranked.length) throw new Error('No eligible sites with these data and filters.');
   if (ranked.some(site => !Number.isFinite(siteCost(site, mode)) || siteCost(site, mode) <= 0)) {
     throw new Error('Missing or nonpositive site costs.');
@@ -29,10 +39,11 @@ function solve(payload) {
   const valueOf = ids => objective(ids, lookup, usablePaths, lambda);
   const totalConnections = lambda * usablePaths.reduce((sum, path) => sum + path.gain, 0);
 
-  // Bundle-aware greedy warm start: entire routes compete with individual cells.
+  // Bundle-aware greedy warm start: entire routes compete with individual cells. It re-evaluates every cell at each
+  // step, so it is only used on small problems (pilot: 280 cells); on the region the corridor swap search below does the job.
   let greedy = new Set();
   let used = 0;
-  while (performance.now() - start < 650) {
+  while (ranked.length <= 2000 && performance.now() - start < 650) {
     let winner = null;
     let winnerRatio = -Infinity;
     const currentValue = valueOf(greedy);
@@ -59,6 +70,51 @@ function solve(payload) {
     best = new Set(greedy);
     bestValue = valueOf(greedy);
   }
+
+  // Corridor swap search (scales to 30 000 cells): try to complete each corridor by adding its cells and dropping
+  // the least valuable selected cells (lowest value per unit of cost, never a cell of an already complete corridor),
+  // then refill any budget left. Keep the swap only if the objective improves; repeat until nothing improves.
+  const ratio = site => site.score / siteCost(site, mode);
+  const ratioOrder = [...ranked].sort((x, y) => ratio(y) - ratio(x) || x.id.localeCompare(y.id));
+  const refill = set => {
+    let room = budget - costOf(set);
+    for (const site of ratioOrder) {
+      if (room <= 1e-8) break;
+      const cost = siteCost(site, mode);
+      if (!set.has(site.id) && cost <= room + 1e-8) { set.add(site.id); room -= cost; }
+    }
+    return set;
+  };
+  // Ratio warm start (value per unit of cost): with land prices, the best cells are not simply the highest-priority ones.
+  const byRatio = new Set();
+  { let room = budget;
+    for (const site of ratioOrder) {
+      const cost = siteCost(site, mode);
+      if (cost <= room + 1e-8) { byRatio.add(site.id); room -= cost; }
+    } }
+  if (valueOf(byRatio) > bestValue + 1e-8) { best = byRatio; bestValue = valueOf(byRatio); }
+  const improve = () => {
+  for (let round = 0, improved = true; improved && round < 50 && usablePaths.length; round++) {
+    improved = false;
+    for (const path of usablePaths) {
+      if (path.sites.every(id => best.has(id))) continue;
+      const candidate = new Set([...best, ...path.sites]);
+      const locked = new Set(usablePaths.filter(p => p.sites.every(id => candidate.has(id))).flatMap(p => p.sites));
+      const removable = [...candidate].filter(id => !locked.has(id)).map(id => lookup.get(id)).sort((a, b) => ratio(a) - ratio(b));
+      let excess = costOf(candidate) - budget;
+      for (const site of removable) {
+        if (excess <= 1e-8) break;
+        candidate.delete(site.id);
+        excess -= siteCost(site, mode);
+      }
+      if (excess > 1e-8) continue;  // the corridor does not fit in the envelope
+      refill(candidate);
+      const value = valueOf(candidate);
+      if (value > bestValue + 1e-8) { best = candidate; bestValue = value; improved = true; }
+    }
+  }
+  };
+  improve();
 
   // Fractional relaxation bounds additive priority; all routes bound synergy.
   const ordered = [...ranked].sort((a, b) =>
@@ -106,6 +162,7 @@ function solve(payload) {
     }
     proven = stack.length === 0;
   }
+  if (!proven) improve();  // the branch-and-bound incumbent may still gain a corridor
   const selected = [...best].sort();
   const upper = proven ? bestValue : Math.max(bestValue, universalBound);
   return {
@@ -116,6 +173,8 @@ function solve(payload) {
     baseline,
     mode,
     budget,
+    min_area: minArea,
+    eligible: ranked.length,
     used: costOf(selected),
     weights,
     connectivity_weight: lambda,

@@ -205,17 +205,28 @@ def main():
              'api_c843ac03b50af0c3': 'Réserve naturelle nationale', 'api_1dfe3e087c5226bc': 'Réserve naturelle régionale',
              'api_af32743665728b50': 'Parc naturel régional', 'api_672b19d8503f7be6': 'Secteur potentiel de restauration (SPRB)',
              'api_c99b206e0d1207f6': 'ORE existante', 'api_b24ca6c5fe3ce85d': 'Zone vulnérable nitrates'}
+    # Real commune names: regional cells carry a placeholder ("Maille régionale H1_…"); the cell -> commune index
+    # built by build_display.py (cells_points.json) gives the commune containing each cell and its department.
+    names = {}
+    if (DATA / 'cells_points.json').exists():
+        cp = json.loads((DATA / 'cells_points.json').read_text())
+        for cid, ci in zip(cp['id'], cp['commune']):
+            if ci is not None and ci >= 0:
+                names[cid] = cp['communes'][ci]
     buyer = []
     for f, g in zip(feats, geoms):
         p = f['properties']
+        known = names.get(p['id'])
+        commune = known['name'] if known and str(p.get('commune') or '').startswith('Maille') else p.get('commune')
+        dept = p.get('department') or (known['insee'][:2] if known else None)
         crit = [p.get(c) for c in 'VDPO']
         rp = sum(w * v for w, v in zip(rp_w, crit)) if all(v is not None for v in crit) else None
         ev_ids = {e['sourceId'] for c in 'VDPO' for e in (p.get('evidence') or {}).get(c, [])}
         price = out_cells[p['id']]
         agri = (price.get('agri') or price.get('rural') or {}).get('median')
         c = g.centroid
-        buyer.append({'id': p['id'], 'lon': round(c.x, 5), 'lat': round(c.y, 5), 'commune': p.get('commune'),
-                      'department': p.get('department'), 'area_ha': round(p.get('area_ha') or 0, 2),
+        buyer.append({'id': p['id'], 'lon': round(c.x, 5), 'lat': round(c.y, 5), 'commune': commune,
+                      'department': dept, 'area_ha': round(p.get('area_ha') or 0, 2),
                       'V': p.get('V'), 'D': p.get('D'), 'P': p.get('P'), 'O': p.get('O'),
                       'rp': None if rp is None else round(rp, 1), 'corridor': p['id'] in corridor_cells,
                       'designations': sorted(v for k_, v in flags.items() if k_ in ev_ids),

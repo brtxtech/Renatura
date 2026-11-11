@@ -6,14 +6,18 @@ import pulp
 from .connectivity import connection_total
 from .scoring import rank_sites, DEFAULT_WEIGHTS
 
-COST_FIELDS = {'sites': None, 'hectares': 'area_ha', 'proxy': 'proxy_cost'}
+# proxy = land acquisition cost in k€ (DVF median €/ha × area, attached by complete_region.py), same as the browser.
+COST_FIELDS = {'sites': None, 'hectares': 'area_ha', 'proxy': 'land_cost_keur'}
 
 
 def resource_cost(site, mode):
     if mode not in COST_FIELDS:
         raise ValueError(f'Unknown constraint: {mode}')
     field = COST_FIELDS[mode]
-    return 1.0 if field is None else float(site[field])
+    if field is None:
+        return 1.0
+    value = site.get(field)
+    return float(value) if isinstance(value, (int, float)) else math.nan
 
 
 def validate_budget(budget):
@@ -40,11 +44,22 @@ def naive_selection(sites, mode, budget):
 
 
 def solve(sites, paths, mode='sites', budget=10, connectivity_weight=0.35,
-          weights=DEFAULT_WEIGHTS, allow_partial=False, seconds=30):
+          weights=DEFAULT_WEIGHTS, allow_partial=False, seconds=30, min_area=0):
     validate_budget(budget)
     if not math.isfinite(connectivity_weight) or connectivity_weight < 0:
         raise ValueError('Connectivity weight must be nonnegative')
+    # Same rules as the browser solver (dist/worker.js): only sites of at least min_area hectares with a known
+    # cost, and a site is worth its priority × its share of a complete cell (no filling the budget with slivers).
+    def usable(site):
+        cost = resource_cost(site, mode)
+        return (site.get('area_ha') or 0) >= min_area and math.isfinite(cost) and cost > 0
+    sites = [site for site in sites if usable(site)]
+    full_area = max((site.get('area_ha') or 0 for site in sites), default=0) or 1
     ranked = rank_sites(sites, weights, allow_partial)
+    for row in ranked:
+        row['rp'] = row['score']
+        row['score'] = row['score'] * (row.get('area_ha') or 0) / full_area
+    ranked.sort(key=lambda x: (-x['score'], x['id']))
     if not ranked:
         return {'status': 'NO_ELIGIBLE_DATA', 'selected': [], 'mode': mode, 'budget': budget}
     for row in ranked:
@@ -107,6 +122,8 @@ def solve(sites, paths, mode='sites', budget=10, connectivity_weight=0.35,
         'baseline': baseline,
         'mode': mode,
         'budget': budget,
+        'min_area': min_area,
+        'eligible': len(ranked),
         'used': used,
         'weights': list(weights),
         'connectivity_weight': connectivity_weight,
@@ -121,6 +138,7 @@ def solve(sites, paths, mode='sites', budget=10, connectivity_weight=0.35,
         'connectivity_total': connection_total(selected, valid_paths),
         'baseline_connectivity': connection_total(baseline, valid_paths),
         'area_ha': sum(lookup[node]['area_ha'] for node in selected),
-        'proxy_cost': sum(lookup[node]['proxy_cost'] for node in selected),
+        'proxy_cost': sum(lookup[node].get('proxy_cost') or 0 for node in selected),
+        'land_cost_keur': sum(lookup[node].get('land_cost_keur') or 0 for node in selected),
         'solver': 'PuLP / CBC, single thread, seed 42',
     }

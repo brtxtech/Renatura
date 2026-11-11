@@ -35,7 +35,9 @@ export function rankSites(sites, weights, partial, minimumV = 10) {
 export function siteCost(site, mode) {
   if (mode === 'sites') return 1;
   if (mode === 'hectares') return site.area_ha;
-  if (mode === 'proxy') return site.proxy_cost;
+  // Regional explorer: land cost in k€ (DVF median €/ha × area, attached by regional-app.js; null = no price).
+  // Pilot explorer (no land_cost_keur field): its own surface proxy.
+  if (mode === 'proxy') return 'land_cost_keur' in site ? site.land_cost_keur : site.proxy_cost;
   throw new Error('Unknown constraint.');
 }
 

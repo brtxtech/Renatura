@@ -20,7 +20,7 @@ const GROUPS = {
 const $ = (s) => document.querySelector(s);
 const e = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-const state = { active: new Set(Object.keys(GROUPS)), entries: [] }; // entries: [{record, marker}]
+const state = { active: new Set(Object.keys(GROUPS)), status: 'all', entries: [] }; // entries: [{record, marker}]
 
 function renderFilters(counts) {
   const el = $('#sp-filters');
@@ -38,10 +38,33 @@ function renderFilters(counts) {
   });
 }
 
+// conservation-status filter for the map (combined with the group filter)
+const THREAT = new Set(['CR', 'EN', 'VU']);
+const STATUS_TEST = {
+  all: () => true,
+  threatened: (r) => THREAT.has(r.redlist),
+  nt: (r) => r.redlist === 'NT',
+  protected: (r) => !!r.protected,
+};
+const isShown = (r) => state.active.has(r.group) && STATUS_TEST[state.status](r);
+
+function renderStatusFilter(records) {
+  const el = $('#sp-map-status');
+  el.querySelectorAll('[data-status]').forEach((b) => {
+    const n = records.filter(STATUS_TEST[b.dataset.status]).length;
+    b.insertAdjacentHTML('beforeend', ` <span class="count">${n.toLocaleString('fr-FR')}</span>`);
+    b.addEventListener('click', () => {
+      state.status = b.dataset.status;
+      el.querySelectorAll('[data-status]').forEach((x) => x.classList.toggle('active', x === b));
+      applyFilter();
+    });
+  });
+}
+
 function applyFilter() {
   let visible = 0;
   for (const { record, marker } of state.entries) {
-    const show = state.active.has(record.group);
+    const show = isShown(record);
     if (show) { marker.addTo(window.__spLayer); visible++; } else { marker.remove(); }
   }
   $('#sp-stat').textContent = `${visible.toLocaleString('fr-FR')} / ${state.entries.length.toLocaleString('fr-FR')} observations affichées`;
@@ -86,6 +109,7 @@ async function init() {
   const counts = {};
   for (const r of records) counts[r.group] = (counts[r.group] || 0) + 1;
   renderFilters(counts);
+  renderStatusFilter(records);
   $('#sp-stat').textContent = `${records.length.toLocaleString('fr-FR')} / ${records.length.toLocaleString('fr-FR')} observations affichées`;
 
   const map = L.map('sp-map', { preferCanvas: true, zoomSnap: 0.25, attributionControl: false });
@@ -186,7 +210,7 @@ function renderZone(limit = 24) {
   const bounds = state.map.getBounds();
   const inZone = new Map();
   for (const { record } of state.entries) {
-    if (!state.active.has(record.group) || !bounds.contains([record.lat, record.lon])) continue;
+    if (!isShown(record) || !bounds.contains([record.lat, record.lon])) continue;
     if (!inZone.has(record.sci)) inZone.set(record.sci, []);
     inZone.get(record.sci).push(record);
   }

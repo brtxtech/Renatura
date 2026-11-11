@@ -47,3 +47,6 @@
 .sp-badge.nt{background:#f4f1d0;color:#6b6213}
 .sp-more{grid-column:1/-1;text-align:center}
 .sp-more button{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 14px;cursor:pointer;font:inherit}
+
+.sp-status-bar{margin-bottom:0}
+.sp-chip .count{opacity:.7;font-weight:500;margin-left:4px}

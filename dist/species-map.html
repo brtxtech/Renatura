@@ -12,6 +12,14 @@
   <h1>Où les espèces ont-elles été photographiées ?</h1>
   <p id="sp-intro">Observations géolocalisées (iNaturalist / GBIF) prises en Normandie, chacune reliée à une photo réelle. Cliquez un point pour voir l’image, l’espèce et sa provenance. Les couleurs distinguent les groupes — elles n’indiquent ni abondance ni priorité de conservation. Sous la carte : les espèces menacées et protégées, puis les espèces de la zone affichée.</p>
 
+  <div class="sp-toolbar sp-status-bar">
+    <div class="sp-chips" id="sp-map-status" role="group" aria-label="Filtrer la carte par statut de conservation">
+      <button class="sp-chip active" data-status="all">Toutes les espèces</button>
+      <button class="sp-chip" data-status="threatened">Menacées (CR, EN, VU)</button>
+      <button class="sp-chip" data-status="nt">Quasi menacées (NT)</button>
+      <button class="sp-chip" data-status="protected">Protégées en France</button>
+    </div>
+  </div>
   <div class="sp-toolbar">
     <div class="sp-filters" id="sp-filters" role="group" aria-label="Filtrer par groupe"></div>
     <div class="sp-stat" id="sp-stat"></div>
@@ -45,7 +53,7 @@
     <div class="sp-section-head">
       <div><div class="eyebrow">ESPÈCES DE LA ZONE</div>
         <h2 id="sp-zone-title">Espèces photographiées dans la zone affichée</h2>
-        <p class="micro">Mise à jour quand vous déplacez ou zoomez la carte ; respecte les groupes cochés au-dessus de la carte. Cliquez une photo pour sa fiche, un nom pour voir ses observations sur la carte.</p></div>
+        <p class="micro">Mise à jour quand vous déplacez ou zoomez la carte ; respecte le statut et les groupes choisis au-dessus de la carte. Cliquez une photo pour sa fiche, un nom pour voir ses observations sur la carte.</p></div>
     </div>
     <div class="sp-gallery" id="sp-zone-gallery"></div>
   </section>

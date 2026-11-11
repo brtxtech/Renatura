@@ -314,7 +314,7 @@ function renderResult() {
 
 function startWorker() {
   if (state.worker) return;
-  state.worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+  state.worker = new Worker(new URL('./worker.js?v=20261111-scenarios2', import.meta.url), { type: 'module' });
   state.worker.onmessage = event => {
     const message = event.data;
     const pending = state.pending.get(message.requestId);

@@ -1,1 +1,1 @@
-{"hedge_years":[2010,2016],"connectivity_available":false,"hex_area_km2":1}
+{"hedge_years":[2010,2016],"connectivity_available":true,"hex_area_km2":1,"corridors_available":true,"connectivity_scope":"observed_subset","scenarios_available":true}

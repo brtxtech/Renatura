@@ -23,10 +23,17 @@ def complete(data,runs=1000,seconds=30,strict=False):
  graph,routes,centrality=analyse(cells,threshold=threshold)
  for p in rows:p['betweenness']=centrality.get(p['id'])
  write(data/'cells.geojson',cells);write_gzip(data/'cells.geojson');write(data/'connectivity.json',graph);write(data/'routes.geojson',routes)
- weights=[.3,.3,.15,.25];specs=[('focused','Intervention ciblée','sites',5),('balanced','Réseau équilibré','sites',12),('ambitious','Ambition territoriale','sites',25),('area500','Enveloppe de 500 ha','hectares',500),('proxy1000','Proxy de 1 000 unités','proxy',1000)]
+ weights=[.3,.3,.15,.25];specs=[('focused','Intervention ciblée','sites',5),('balanced','Réseau équilibré','sites',12),('ambitious','Ambition territoriale','sites',25),('area500','Enveloppe de 500 ha','hectares',500),('land5000','Budget foncier de 5 M€','proxy',5000)]
+ # Land cost per cell for the "Budget foncier" constraint (DVF median €/ha × area, k€), as in regional-app.js.
+ prices={}
+ if (data/'buyer_cells.json').exists():
+  for c in read(data/'buyer_cells.json')['cells']:
+   p=(c['price'].get('agri') or c['price'].get('rural') or {}).get('median')
+   if p:prices[c['id']]=p
+ solve_rows=[dict(p,land_cost_keur=prices[p['id']]*(p.get('area_ha') or 0)/1000 if p['id'] in prices else None) for p in rows]
  presets=[]
  for id,name,mode,budget in specs:
-  r=solve(rows,graph['paths'],mode,budget,.35,weights,True,seconds)
+  r=solve(solve_rows,graph['paths'],mode,budget,.35,weights,True,seconds,min_area=50)
   if r['status']=='NO_ELIGIBLE_DATA':continue
   r.update(id=id,name=name,scope='Normandie / mailles réellement observées et éligibles',regional_coverage_complete=graph['observed_cells']==len(rows));presets.append(r)
  write(data/'scenarios.json',presets)

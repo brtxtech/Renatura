@@ -1,4 +1,5 @@
 import { $, esc, fmt, loadJSON, ramp } from './extensions-common.js';
+import { attachOrientation } from './orientation.js';
 
 const [buyer, prices] = await Promise.all([loadJSON('data/normandie/buyer_cells.json'), loadJSON('data/normandie/prices.json')]);
 const cells = buyer.cells;
@@ -14,6 +15,16 @@ for (const k of Object.keys(value)) {
 const map = L.map('map', { preferCanvas: true }).setView([49.1, 0.0], 8);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
 const renderer = L.canvas({ padding: 0.3 });
+// Landmarks: commune names (always) + optional roads / rail / stops (OSM), same control as the other maps.
+attachOrientation(map, 'leaflet');
+// The selected cell: orange ring + commune name, so the card on the right is easy to find on the map.
+const highlight = L.layerGroup().addTo(map);
+function markCell(c) {
+  highlight.clearLayers();
+  L.circleMarker([c.lat, c.lon], { radius: 9, color: '#c27028', weight: 3, fill: false, interactive: false }).addTo(highlight);
+  L.tooltip({ permanent: true, direction: 'top', offset: [0, -10], className: 'cell-label', interactive: false })
+    .setLatLng([c.lat, c.lon]).setContent(esc(c.commune || c.id)).addTo(highlight);
+}
 const markers = cells.map(c => L.circleMarker([c.lat, c.lon], { renderer, radius: 3, weight: 0, fillOpacity: 0.85 })
   .on('click', () => showCard(c)).addTo(map));
 
@@ -33,6 +44,7 @@ function priceBlock(label, p) {
 }
 
 function showCard(c) {
+  markCell(c);
   const ref = prices.meta.bareme_by_department[c.department];
   const area = c.area_ha, med = priceOf(c);
   $('#cardbox').innerHTML = `<div class="eyebrow">Fiche acquéreur · ${esc(c.id)}</div>

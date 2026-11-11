@@ -1044,3 +1044,14 @@ html {
 @media print {
   .topbar { position: static; }
 }
+
+/* scenario lab: parameter explanations */
+.scenario-help { margin: 8px 0 4px; font-size: 12px; line-height: 1.45; color: var(--muted, #5d6b5f); }
+.scenario-help summary { cursor: pointer; font-weight: 600; color: var(--ink, #173d31); }
+.scenario-help p { margin: 6px 0 0; }
+
+/* protection view */
+.protection-tools { margin: 10px 0; padding: 10px 12px; border: 1px solid #e3d9c6; border-radius: 8px; background: #fbf8f1; }
+.protection-tools .micro { margin: 4px 0; }
+.protection-block { margin: 10px 0; padding: 8px 10px; border-left: 3px solid #56774e; background: #f4f7f1; border-radius: 4px; }
+.protection-block.is-gap { border-left-color: #c2410c; background: #fdf3ec; }
