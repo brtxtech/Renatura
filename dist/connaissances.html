@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renatura · Connaissances</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="shared-header.css">
+  <script defer src="shared-header.js"></script>
+  <style>
+    .kgrid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
+    @media (max-width: 960px) { .kgrid { grid-template-columns: 1fr; } }
+    .kv { display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; font-size: 13.5px; }
+    .kv b { text-align: right; }
+    label { display: block; margin-top: 10px; font-size: 13px; color: var(--muted); }
+    input[type=text], input[type=search], textarea, select { width: 100%; box-sizing: border-box; padding: 9px 10px; border: 1px solid var(--line);
+      border-radius: 8px; font: inherit; background: #fff; }
+    textarea { min-height: 140px; resize: vertical; }
+    .btn { margin-top: 10px; padding: 9px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #fff;
+      font: inherit; font-weight: 600; cursor: pointer; }
+    .btn.ghost { background: #fff; color: var(--accent); }
+    .btn:disabled { opacity: .5; cursor: default; }
+    .docs { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .docs th, .docs td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    .docs td.n { text-align: right; white-space: nowrap; }
+    .docs tr.off td { color: #9aa79f; }
+    .docs button { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 3px 8px; font: inherit; font-size: 12px; cursor: pointer; }
+    .docs button.danger { color: var(--bad); }
+    .tag { display: inline-block; border-radius: 999px; padding: 1px 8px; font-size: 11.5px; background: var(--chip); color: var(--ink); }
+    .tag.user { background: #e3f2ea; color: #2f7d5b; } .tag.methode { background: #fdf1e3; color: #9a5b16; }
+    .hit { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: #fff; }
+    .hit pre { white-space: pre-wrap; font: 13px/1.45 system-ui, sans-serif; margin: 6px 0 0; color: #34463d; max-height: 180px; overflow: auto; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: end; }
+    .toolbar > * { flex: 1 1 160px; }
+    .pager { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 8px; font-size: 13px; }
+    dialog { max-width: min(860px, 94vw); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+    dialog pre { white-space: pre-wrap; font: 13px/1.5 system-ui, sans-serif; max-height: 60vh; overflow: auto; }
+  </style>
+</head>
+<body>
+  <header></header>
+  <main class="ext" id="main">
+    <div class="eyebrow">Assistant IA · base de connaissances (RAG)</div>
+    <h1>Ce que sait l’assistant, et comment l’enrichir.</h1>
+    <p class="lead">L’assistant ne répond aux questions qualitatives (espèces, milieux, maladies, cohabitation, méthode) qu’à partir des
+      passages de cette base, qu’il cite. Chaque document peut être consulté, désactivé (il n’est plus utilisé, sans être supprimé), supprimé,
+      et l’équipe peut en ajouter. La recherche combine un modèle de plongements Hugging Face et les mots exacts.</p>
+    <div id="status" class="notice" hidden></div>
+
+    <div class="kgrid">
+      <aside>
+        <section class="card">
+          <strong>Configuration</strong>
+          <div class="kv" id="config" style="margin-top:8px"></div>
+          <p class="micro" style="margin-top:8px">Modèles réglables par variables d’environnement au lancement du serveur :
+            <code>RENATURA_EMBED_MODEL</code> (plongements, identifiant Hugging Face), <code>RENATURA_LLM_URL</code> /
+            <code>RENATURA_LLM_MODEL</code> / <code>HF_TOKEN</code> (LLM local Ollama ou Hugging Face).</p>
+        </section>
+        <section class="card" style="margin-top:14px">
+          <strong>Ajouter une connaissance</strong>
+          <form id="add-form">
+            <label for="k-title">Titre *</label><input id="k-title" type="text" maxlength="200" required placeholder="Ex. Gestion des haies — guide CAUE 14">
+            <label for="k-source">Source</label><input id="k-source" type="text" maxlength="500" placeholder="URL, référence, auteur…">
+            <label for="k-cat">Catégorie</label>
+            <select id="k-cat"><option>ajout</option><option>espèces</option><option>milieux</option><option>maladies</option>
+              <option>cohabitation</option><option>méthode Renatura</option><option>réglementation</option><option>terrain</option></select>
+            <label for="k-text">Texte</label><textarea id="k-text" placeholder="Coller le texte… (ou joindre un fichier ci-dessous)"></textarea>
+            <label for="k-file">ou fichier .md, .txt, .pdf (10 Mo max)</label><input id="k-file" type="file" accept=".md,.txt,.pdf,.csv,.json">
+            <label for="k-key" id="k-key-label" hidden>Clé de modification</label><input id="k-key" type="password" hidden autocomplete="off">
+            <button class="btn" type="submit" id="add-btn">Ajouter à la base</button>
+            <div class="micro" id="add-msg" role="status" style="margin-top:6px"></div>
+          </form>
+        </section>
+      </aside>
+
+      <div>
+        <section class="card">
+          <strong>Tester la recherche</strong>
+          <form id="search-form" class="toolbar" style="margin-top:6px">
+            <div><input id="q" type="search" placeholder="Ex. maladies des frênes, triton crêté, poids de la ZNIEFF…" aria-label="Question"></div>
+            <button class="btn ghost" type="submit" style="flex:0 0 auto">Rechercher</button>
+          </form>
+          <div id="hits"></div>
+        </section>
+        <section class="card" style="margin-top:14px">
+          <div class="toolbar">
+            <div><strong>Documents</strong> <span class="micro" id="count"></span></div>
+            <div><input id="filter" type="search" placeholder="Filtrer par titre ou source" aria-label="Filtrer"></div>
+            <div style="flex:0 0 180px"><select id="origin" aria-label="Origine"><option value="">Toutes origines</option>
+              <option value="user">Ajouts de l’équipe</option><option value="methode">Méthode Renatura</option><option value="corpus">Corpus Normandie</option></select></div>
+          </div>
+          <div class="table-scroll" style="margin-top:8px"><table class="docs"><thead><tr><th>Document</th><th>Origine</th><th class="n">Passages</th><th></th></tr></thead>
+            <tbody id="docs"></tbody></table></div>
+          <div class="pager"><button class="btn ghost" id="prev" type="button">←</button><span id="page"></span><button class="btn ghost" id="next" type="button">→</button></div>
+        </section>
+      </div>
+    </div>
+    <dialog id="viewer"><form method="dialog" style="text-align:right"><button class="btn ghost">Fermer</button></form><h3 id="v-title"></h3><p class="micro" id="v-meta"></p><pre id="v-text"></pre></dialog>
+  </main>
+  <script type="module" src="connaissances.js"></script>
+</body>
+</html>

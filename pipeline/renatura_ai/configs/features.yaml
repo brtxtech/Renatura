@@ -1,0 +1,84 @@
+# Renatura AI · real Normandy tables, one row per cell_id + observation_year (NaN = not observed, never 0).
+# Built by tools/normandie/build_clc_features.py and tools/normandie/build_ml_targets.py.
+# features.template.yaml keeps the original canonical template of the renatura_ai package.
+cell_id: cell_id
+year: observation_year
+models:
+  human_pressure:
+    data: datasets/normandie_regional/ml/features_pressure.csv
+    task: regression
+    features:
+    - artificial_fraction
+    - urban_fabric_fraction
+    - industrial_transport_fraction
+    - mines_construction_fraction
+    - green_urban_fraction
+    - agri_fraction
+    - forest_seminatural_fraction
+    - wetland_fraction
+    - water_fraction
+    - artificial_neigh_3km
+    - roads_m_ha
+    - transit_stops
+    - icpe
+    - rail
+    - built_share_2017
+    target: observed_human_pressure
+    target_label: log10(1 + habitants par km²), INSEE Filosofi
+    baseline_feature: artificial_fraction
+    baseline_name: régression linéaire sur la part artificialisée
+    direction: high_is_bad
+  eco_vulnerability:
+    data: datasets/normandie_regional/ml/features_clc.csv
+    task: classification
+    positive_above: 0.01
+    features:
+    - forest_seminatural_fraction
+    - wetland_fraction
+    - agri_fraction
+    - artificial_fraction
+    - water_fraction
+    - mines_construction_fraction
+    - artificial_neigh_3km
+    - artificial_change_prev
+    - artificial_neigh_change_prev
+    - natural_loss_prev
+    target: observed_ecological_impact
+    target_label: perte d'habitat naturel (forêts, milieux semi-naturels, zones humides)
+      > 1 point en 6 ans
+    baseline_feature: natural_loss_prev
+    baseline_name: « a perdu de l'habitat pendant la période précédente »
+    params:
+      learning_rate: 0.05
+      max_iter: 300
+    direction: high_is_bad
+    label_years:
+    - 2000
+    - 2006
+  territory_forecast:
+    data: datasets/normandie_regional/ml/features_clc.csv
+    task: classification
+    positive_above: 0.01
+    target_mode: change
+    horizon_years: 6
+    features:
+    - artificial_fraction
+    - urban_fabric_fraction
+    - industrial_transport_fraction
+    - mines_construction_fraction
+    - green_urban_fraction
+    - agri_fraction
+    - forest_seminatural_fraction
+    - wetland_fraction
+    - water_fraction
+    - artificial_neigh_3km
+    - artificial_change_prev
+    - artificial_neigh_change_prev
+    target: artificial_fraction
+    target_label: artificialisation de plus de 1 point de la maille en 6 ans
+    baseline_feature: artificial_change_prev
+    baseline_name: « s'est artificialisée pendant la période précédente »
+    params:
+      learning_rate: 0.05
+      max_iter: 300
+    direction: high_is_bad

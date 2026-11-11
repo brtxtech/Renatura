@@ -7,6 +7,7 @@
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
   <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="orientation.css">
   <link rel="stylesheet" href="shared-header.css">
   <script defer src="shared-header.js"></script>
   <style>
@@ -22,6 +23,18 @@
     .hist div { flex: 1; border-radius: 3px 3px 0 0; position: relative; }
     .hist span { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--muted); }
     .cmp td:nth-child(n+2) { text-align: right; }
+    #map .orientation-control { left: auto; right: 12px; }  /* Leaflet zoom buttons stay top-left */
+    .commune-label { background: #fffdf7; border: 1.5px solid #c27028; border-radius: 6px; color: #7a3d0c; font: 700 13px system-ui, sans-serif; padding: 3px 8px; box-shadow: 0 2px 8px #0002; }
+    .commune-label::before { display: none; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr; } }
+    .grid3 .card { margin: 0; }
+    .sp-mini { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 8px; }
+    .sp-mini figure { margin: 0; font-size: 11px; line-height: 1.25; }
+    .sp-mini img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--chip); display: block; }
+    .sp-mini b { display: block; margin-top: 3px; }
+    .chip.cr { background: #f8e5e6; color: #8f1d22; } .chip.en { background: #fbe9df; color: #a2421a; }
+    .chip.vu { background: #fbf1d9; color: #7a5a00; } .chip.nt { background: #eef3dc; color: #4d6b12; }
   </style>
 </head>
 <body>
@@ -57,6 +70,11 @@
       </div>
     </div>
     <div class="card" style="margin-top:14px" id="table" hidden></div>
+    <div class="grid3" id="context" hidden style="margin-top:14px">
+      <div class="card" id="ctx-climate"></div>
+      <div class="card" id="ctx-species"></div>
+      <div class="card" id="ctx-price"></div>
+    </div>
     <div class="card" style="margin-top:14px">
       <h3>Méthode</h3>
       <ul class="micro">
@@ -66,6 +84,9 @@
         <li>RP = moyenne pondérée de V, D, P, O agrégés (pondérations ci-dessus) ; calculé pour chaque carré disposant de données, comme dans l’explorateur (V &lt; 10 est signalé comme valeur écologique faible). Un carré de 1 km sans centre d’hexagone reçoit les valeurs de la maille de 1 km² qui couvre son centre.</li>
         <li>Résolution minimale : 1 km. Descendre sous 1 km demanderait de recalculer les critères à partir des couches de l’atlas.</li>
         <li>« Commune + X km » : emprise rectangulaire de la commune élargie de X km.</li>
+        <li>Climat : réanalyse ERA5 (grille ~0,5°, soit 25 à 50 km) ; écarts 2016–2025 par rapport à 1991–2020 et tendances (pente de Sen, test de Mann-Kendall). Résolution régionale, pas un microclimat de maille.</li>
+        <li>Espèces : observations photographiées iNaturalist / GBIF rattachées à la maille de 1 km² la plus proche ; statuts TAXREF (liste rouge Normandie, protection nationale). Une absence d’observation ne prouve pas l’absence de l’espèce ; espèces sensibles positionnées à ~10 km près.</li>
+        <li>Prix : DVF 2021–2025 (terrains ruraux non bâtis), statistique publiée seulement au-delà de 5 ventes ; prix indicatif par maille (maille, voisinage 5–10 km ou département), pas une estimation.</li>
       </ul>
     </div>
   </main>

@@ -1,4 +1,5 @@
 import { $, esc, fmt, loadJSON } from './extensions-common.js';
+import { attachOrientation } from './orientation.js';
 
 // ---------- Lambert-93 (EPSG:2154) -> WGS84, analytic inverse (GRS80); checked against pyproj (< 2 m)
 const A = 6378137, E = 0.0818191910428158, RAD = Math.PI / 180;
@@ -13,6 +14,11 @@ function toLatLng(x, y) {
   let phi = Math.PI / 2 - 2 * Math.atan(t);
   for (let i = 0; i < 8; i++) phi = Math.PI / 2 - 2 * Math.atan(t * ((1 - E * Math.sin(phi)) / (1 + E * Math.sin(phi))) ** (E / 2));
   return [phi / RAD, (Math.atan2(dx, dy) / N + LON0) / RAD];
+}
+
+function toL93(lat, lon) {
+  const phi = lat * RAD, rho = A * F * tf(phi) ** N, th = N * (lon * RAD - LON0);
+  return [X0 + rho * Math.sin(th), Y0 + RHO0 - rho * Math.cos(th)];
 }
 
 // ---------- state
@@ -49,6 +55,8 @@ const regional = Object.fromEntries(KEYS.map(k => [k, mean(pts[k], pts.area)]));
 const map = L.map('map', { preferCanvas: true }).setView([49.1, 0.0], 8);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: '© OpenStreetMap' }).addTo(map);
 const outline = L.layerGroup().addTo(map), grid = L.layerGroup().addTo(map);
+// Landmarks: commune names (always) + optional roads / rail / stops (OSM), same control as the other maps.
+attachOrientation(map, 'leaflet');
 
 // ---------- weights
 $('#weights').innerHTML = KEYS.map((k, i) => `<label>${k} <b id="w${i}">${Math.round(state.weights[i] * 100)}</b> %<input type="range" min="0" max="100" value="${state.weights[i] * 100}" data-w="${i}"></label>`).join('');
@@ -138,6 +146,7 @@ function analyse(fit = false) {
   $('#square').hidden = true;
   drawOutline(fit);
   draw();
+  renderContext(cells);
 }
 
 function drawOutline(fit) {
@@ -145,6 +154,9 @@ function drawOutline(fit) {
   const f = communes.features[state.commune];
   if (!f) return;
   const layer = L.geoJSON(f, { style: { color: '#c27028', weight: 3, fill: false, dashArray: '6 4' }, interactive: false }).addTo(outline);
+  // Name of the analysed commune, always visible at the centre of its outline (above the grid).
+  L.tooltip({ permanent: true, direction: 'top', offset: [0, -12], className: 'commune-label', interactive: false })
+    .setLatLng(layer.getBounds().getCenter()).setContent(esc(pts.communes[state.commune].name)).addTo(outline);
   if (fit) map.fitBounds(layer.getBounds().pad(+$('#zone').value > 0 ? 0.6 : 0.15));
 }
 
@@ -278,8 +290,149 @@ function showSquare(sq) {
     ${sq.filled ? '<p class="micro">Aucun centre de maille régionale ne tombe dans ce carré (les hexagones de 1 km² sont espacés d’environ 1,07 km) : valeurs de la maille de 1 km² qui couvre son centre.</p>' : ''}
     <p class="micro">${sq.cells} maille(s) régionale(s) de 1 km² · ${fmt(sq.area, 0)} ha · dont ${sq.inCommune} dans ${esc(pts.communes[state.commune].name)}.
       Ouvrir l’<a href="explorer-normandie.html">explorateur Normandie</a> pour le détail des sources d’une maille de 1 km².</p>
+    <div id="sq-context">${squareContext(sq)}</div>
     <div id="why"><p class="micro">Chargement des explications…</p></div>`;
   explainSquare(sq);
+}
+
+// ---------- context below the map: climate, threatened species, land price (loaded once, in the background)
+const ctx = { data: null };
+const THREAT_RANK = { CR: 0, EN: 1, VU: 2, NT: 3 };
+const STATUS_FR = { CR: 'En danger critique', EN: 'En danger', VU: 'Vulnérable', NT: 'Quasi menacée' };
+function loadContext() {
+  if (ctx.loading) return ctx.loading;
+  const soft = p => loadJSON(p).catch(() => null);
+  ctx.loading = Promise.all([soft('data/normandie/climate.json'), soft('data/normandie/buyer_cells.json'), soft('data/species-observations.json')])
+    .then(([climate, buyer, obs]) => {
+      const cellIdx = new Map(pts.id.map((id, i) => [id, i]));
+      const price = new Map();
+      for (const c of buyer?.cells || []) { const i = cellIdx.get(c.id); if (i != null) price.set(i, c); }
+      // every photographed observation -> nearest 1 km² cell (same index as pts)
+      const obsByCell = new Map();
+      for (const r of obs || []) {
+        const [x, y] = toL93(r.lat, r.lon), i = nearestCell(x, y);
+        if (i < 0) continue;
+        if (!obsByCell.has(i)) obsByCell.set(i, []);
+        obsByCell.get(i).push(r);
+      }
+      const points = new Map((climate?.points || []).map(p => [p.id, p]));
+      ctx.data = { climate, points, price, obsByCell, hasObs: !!obs, hasPrice: !!buyer };
+      return ctx.data;
+    });
+  return ctx.loading;
+}
+
+const isThreat = r => THREAT_RANK[r.redlist] !== undefined;
+function speciesOf(idx) {
+  const sp = new Map();
+  for (const i of idx) for (const r of ctx.data.obsByCell.get(i) || []) {
+    if (!sp.has(r.sci)) sp.set(r.sci, { sci: r.sci, fr: r.fr, group: r.group, redlist: r.redlist, protected: r.protected, recs: [] });
+    sp.get(r.sci).recs.push(r);
+  }
+  return [...sp.values()];
+}
+function weightedMedian(pairs) {
+  const v = pairs.filter(([x, w]) => Number.isFinite(x) && w > 0).sort((a, b) => a[0] - b[0]);
+  const tot = v.reduce((t, [, w]) => t + w, 0);
+  let acc = 0;
+  for (const [x, w] of v) { acc += w; if (acc >= tot / 2) return x; }
+  return null;
+}
+function priceStats(idx, kind) {
+  const rows = idx.map(i => [ctx.data.price.get(i)?.price?.[kind], pts.area[i] || 0]).filter(([p]) => p);
+  if (!rows.length) return null;
+  const levels = {};
+  rows.forEach(([p]) => { levels[p.level] = (levels[p.level] || 0) + 1; });
+  return { median: weightedMedian(rows.map(([p, w]) => [p.median, w])), p25: weightedMedian(rows.map(([p, w]) => [p.p25, w])),
+    p75: weightedMedian(rows.map(([p, w]) => [p.p75, w])), cells: rows.length, levels };
+}
+
+async function renderContext(cells) {
+  const box = $('#context');
+  box.hidden = false;
+  if (!ctx.data) ['#ctx-climate', '#ctx-species', '#ctx-price'].forEach(s => { $(s).innerHTML = '<p class="micro">Chargement…</p>'; });
+  const commune = state.commune;
+  await loadContext();
+  if (commune !== state.commune) return;
+  const area = cells.reduce((t, i) => t + (pts.area[i] || 0), 0) || 1;
+  const name = esc(pts.communes[state.commune].name);
+
+  // climate: ERA5 points used by the zone, weighted by area
+  const cl = ctx.data.climate;
+  if (!cl) $('#ctx-climate').innerHTML = '<h3>Climat</h3><p class="micro">Données climatiques indisponibles.</p>';
+  else {
+    const w = new Map(); let built06 = 0, built25 = 0, bw = 0;
+    for (const i of cells) {
+      const c = cl.cells?.[pts.id[i]]; if (!c) continue;
+      w.set(c.point, (w.get(c.point) || 0) + (pts.area[i] || 0));
+      if (c.built_2006 != null && c.built_2025 != null) { built06 += c.built_2006 * pts.area[i]; built25 += c.built_2025 * pts.area[i]; bw += pts.area[i]; }
+    }
+    const tot = [...w.values()].reduce((a, b) => a + b, 0) || 1;
+    const avg = f => { let s = 0, ww = 0; for (const [id, x] of w) { const v = f(ctx.data.points.get(id)); if (Number.isFinite(v)) { s += v * x; ww += x; } } return ww ? s / ww : null; };
+    const sig = k => [...w.keys()].some(id => ctx.data.points.get(id)?.trends?.[k]?.significant);
+    const ROWS = [['tmean', 'Température moyenne', '°C', 2], ['hot_days', 'Jours ≥ 30 °C', 'j', 1], ['rain_mm', 'Pluie annuelle', 'mm', 0],
+      ['summer_rain_mm', 'Pluie d’été (JJA)', 'mm', 0], ['dry_days', 'Jours secs (< 1 mm)', 'j', 0], ['max_dry_spell', 'Plus longue période sèche', 'j', 1]];
+    const signed = (v, d) => v == null ? '—' : `${v > 0 ? '+' : ''}${fmt(v, d)}`;
+    const recent = (p, k) => { const ys = Object.entries(p?.climate || {}).filter(([y]) => +y >= 2016 && +y <= 2025).map(([, v]) => v[k]).filter(Number.isFinite); return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : null; };
+    $('#ctx-climate').innerHTML = `<div class="eyebrow">Climat · ${name}</div><h3>Ce qui a changé</h3>
+      <p class="micro">2016–2025 comparé à 1991–2020 (réanalyse ERA5, ${w.size} point(s) de grille ~0,5° couvrant la zone).</p>
+      <table class="data cmp"><tr><th></th><th>2016–2025</th><th>Écart</th><th>Tendance / décennie</th></tr>
+      ${ROWS.map(([k, l, u, d]) => `<tr><td>${l}</td><td>${fmt(avg(p => recent(p, k)), d)} ${u}</td><td><b>${signed(avg(p => p?.anomaly_2016_2025_vs_1991_2020?.[k]), d)}</b></td>
+        <td>${signed(avg(p => p?.trends?.[k]?.slope_per_decade), d)}${sig(k) ? ' <span class="chip warn">significative</span>' : ''}</td></tr>`).join('')}</table>
+      ${bw ? `<p class="micro" style="margin-top:8px">Surface bâtie de la zone : ${fmt(built06 / bw * 100, 1)} % en 2006 → <b>${fmt(built25 / bw * 100, 1)} %</b> en 2025.</p>` : ''}
+      <p class="micro">Résolution régionale : les communes voisines partagent les mêmes valeurs. Détail sur la page <a href="climat-normandie.html">Climat</a>.</p>`;
+  }
+
+  // threatened / protected species photographed in the zone
+  if (!ctx.data.hasObs) $('#ctx-species').innerHTML = '<h3>Espèces menacées</h3><p class="micro">Observations indisponibles.</p>';
+  else {
+    const all = speciesOf(cells);
+    const threat = all.filter(isThreat).sort((a, b) => THREAT_RANK[a.redlist] - THREAT_RANK[b.redlist] || b.recs.length - a.recs.length);
+    const prot = all.filter(s => s.protected);
+    const count = st => all.filter(s => s.redlist === st).length;
+    const shown = [...threat, ...prot.filter(s => !isThreat(s)).sort((a, b) => b.recs.length - a.recs.length)].slice(0, 12);
+    $('#ctx-species').innerHTML = `<div class="eyebrow">Espèces · ${name}</div><h3>Espèces menacées et protégées</h3>
+      <div class="kpis"><div class="kpi"><b>${fmt(all.length)}</b><span>espèces photographiées</span></div>
+        <div class="kpi"><b>${fmt(threat.filter(s => s.redlist !== 'NT').length)}</b><span>menacées (CR, EN, VU)</span></div>
+        <div class="kpi"><b>${fmt(prot.length)}</b><span>protégées en France</span></div></div>
+      <p>${['CR', 'EN', 'VU', 'NT'].map(st => `<span class="chip ${st.toLowerCase()}">${st} · ${count(st)}</span>`).join('')}</p>
+      ${shown.length ? `<div class="sp-mini">${shown.map(s => `<figure title="${esc(s.sci)} · ${s.recs.length} photo(s)"><img src="data/species-images/${esc(s.recs[0].img)}" alt="${esc(s.fr || s.sci)}" loading="lazy">
+        <b>${esc(s.fr || s.sci)}</b>${isThreat(s) ? `<span class="chip ${s.redlist.toLowerCase()}">${s.redlist}</span>` : ''}${s.protected ? '<span class="chip ok">Protégée</span>' : ''}</figure>`).join('')}</div>`
+        : '<p class="micro">Aucune espèce menacée ou protégée photographiée dans la zone (ce qui ne prouve pas leur absence).</p>'}
+      <p class="micro" style="margin-top:8px">Liste rouge régionale de Normandie et protection nationale (TAXREF). Toutes les photos sur la carte <a href="species-map.html">Observations &amp; images</a>.</p>`;
+  }
+
+  // land price (DVF) and benefit per euro
+  if (!ctx.data.hasPrice) $('#ctx-price').innerHTML = '<h3>Prix du foncier</h3><p class="micro">Prix indisponibles.</p>';
+  else {
+    const agri = priceStats(cells, 'agri'), forest = priceStats(cells, 'forest'), rural = priceStats(cells, 'rural');
+    const med = (agri || rural)?.median;
+    const rp10 = cells.map(i => [ctx.data.price.get(i)?.rp_per_10k_eur, pts.area[i] || 0]).filter(([v]) => Number.isFinite(v));
+    const rpPer = rp10.length ? rp10.reduce((t, [v, w]) => t + v * w, 0) / rp10.reduce((t, [, w]) => t + w, 0) : null;
+    const line = (l, p) => p ? `<tr><td>${l}</td><td><b>${fmt(p.median)} €/ha</b></td><td>${fmt(p.p25)} – ${fmt(p.p75)}</td></tr>` : `<tr><td>${l}</td><td colspan="2" class="muted">moins de 5 ventes</td></tr>`;
+    const lv = (agri || rural)?.levels || {};
+    $('#ctx-price').innerHTML = `<div class="eyebrow">Foncier · ${name}</div><h3>Prix du foncier rural</h3>
+      <div class="kpis"><div class="kpi"><b>${fmt(med)} €</b><span>par ha (médiane indicative)</span></div>
+        <div class="kpi"><b>${fmt(med * area / 1000 / 1000, 1)} M€</b><span>ordre de grandeur pour ${fmt(area, 0)} ha</span></div>
+        <div class="kpi"><b>${fmt(rpPer, 1)}</b><span>points RP par 10 000 €/ha</span></div></div>
+      <table class="data"><tr><th></th><th>Médiane</th><th>25–75 %</th></tr>${line('Terres et prés', agri)}${line('Bois', forest)}${line('Tout rural', rural)}</table>
+      <p class="micro" style="margin-top:8px">Ventes notariées DVF 2021–2025 (terrains ruraux non bâtis), au moins 5 ventes par chiffre. Base des mailles : ${Object.entries(lv).map(([k, v]) => `${esc(k)} ${fmt(v)}`).join(' · ')}.
+        Prix indicatif, pas une estimation. Fiche par maille : <a href="acheteur-normandie.html">Futurs acquéreurs</a>.</p>`;
+  }
+}
+
+function squareContext(sq) {
+  if (!ctx.data) return '';
+  const parts = [];
+  if (ctx.data.hasPrice) {
+    const p = priceStats(sq.idx, 'agri') || priceStats(sq.idx, 'rural');
+    if (p) parts.push(`Prix indicatif : <b>${fmt(p.median)} €/ha</b> (${fmt(p.p25)} – ${fmt(p.p75)})`);
+  }
+  if (ctx.data.hasObs) {
+    const sp = speciesOf(sq.idx), t = sp.filter(s => isThreat(s) && s.redlist !== 'NT');
+    parts.push(`${fmt(sp.length)} espèce(s) photographiée(s), dont <b>${fmt(t.length)} menacée(s)</b>${t.length ? ` : ${t.slice(0, 4).map(s => esc(s.fr || s.sci) + ` (${s.redlist})`).join(', ')}` : ''} et ${fmt(sp.filter(s => s.protected).length)} protégée(s)`);
+  }
+  return parts.length ? `<p class="micro">${parts.join('<br>')}</p>` : '';
 }
 
 function exportCSV() {

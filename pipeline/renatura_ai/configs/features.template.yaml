@@ -1,0 +1,18 @@
+# Renatura features canonicalised by cell_id + observation_year, NOT atlas display names.
+# Replace paths/column names using the actual ingestion schema.
+cell_id: cell_id
+year: observation_year
+models:
+  human_pressure:
+    features: [road_density_km_km2, rail_density_km_km2, built_fraction, icpe_density_km2, quarry_fraction, population_density, impervious_fraction]
+    target: observed_human_pressure
+    direction: high_is_bad
+  eco_vulnerability:
+    features: [forest_fraction, canopy_fraction, hedgerow_loss_fraction, habitat_fragmentation, corridor_density_km_km2, wetland_fraction, protected_fraction, human_pressure_observed, drought_index, species_richness]
+    target: observed_ecological_impact
+    direction: high_is_bad
+  territory_forecast:
+    features: [built_fraction, road_density_km_km2, forest_fraction, hedgerow_loss_fraction, human_pressure_observed, drought_index, population_density]
+    target: built_fraction
+    horizon_years: 1
+    direction: high_is_bad

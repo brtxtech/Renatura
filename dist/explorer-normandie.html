@@ -71,8 +71,18 @@
           <option value="CTX">CTX · Contexte documentaire</option>
           <option value="O">O · Opportunité d'action documentée</option>
           <option value="betweenness">Intermédiarité du graphe</option>
-          <option value="PP">Protection — indisponible</option>
+          <option value="PP">PP · Priorité de protection</option>
+          <optgroup label="Modèles IA Renatura (prédictions)">
+            <option value="ML_ARTIF" data-ml disabled>IA · Risque d’artificialisation 2018→2024</option>
+            <option value="ML_HABITAT" data-ml disabled>IA · Risque de perte d’habitat naturel</option>
+            <option value="ML_PRESSURE" data-ml disabled>IA · Pression humaine estimée (population)</option>
+          </optgroup>
         </select>
+        <div id="protection-tools" class="protection-tools" hidden>
+          <p class="micro" data-i18n="protectionIntro"></p>
+          <label class="check-row"><input id="gaps-only" type="checkbox"><span data-i18n="gapsOnly">Lacunes de protection uniquement</span></label>
+          <p class="micro" id="protection-summary"></p>
+        </div>
         <div class="coverage-note"><span>!</span><p data-i18n="partialNotice">Les quatre critères V, D, P et O sont calculés pour toutes les mailles à partir des couches de l’atlas.</p></div>
         <label class="check-row"><input id="partial" type="checkbox" checked><span data-i18n="allowPartial">Autoriser le score partiel V + D</span></label>
         <div class="section-heading"><h2 data-i18n="weights">Pondération des critères</h2><button id="reset-weights" class="text-button" data-i18n="reset">Réinitialiser</button></div>
@@ -129,9 +139,12 @@
         <div id="presets" class="preset-list"></div>
         <div class="divider"><span data-i18n="custom">ou composer un scénario</span></div>
         <label class="field-label" for="constraint" data-i18n="constraint">Type de contrainte</label>
-        <select id="constraint"><option value="sites">Nombre maximum de sites</option><option value="hectares">Surface maximale · hectares</option><option value="proxy">Budget proxy · unités hectare</option></select>
+        <select id="constraint"><option value="sites">Nombre maximum de sites</option><option value="hectares">Surface maximale · hectares</option><option value="proxy">Budget foncier · k€ (prix DVF)</option></select>
         <label class="field-label" for="budget" data-i18n="envelope">Enveloppe disponible</label>
         <div class="budget-field"><input id="budget" type="number" min="0" max="100000" step="1" value="12"><span id="budget-unit">sites</span></div>
+        <label class="field-label" for="min-area" data-i18n="minArea">Surface minimale d’un site</label>
+        <div class="budget-field"><input id="min-area" type="number" min="0" max="100" step="5" value="50"><span>ha</span></div>
+        <details class="scenario-help"><summary data-i18n="scenarioHelpTitle">Comprendre ces paramètres</summary><div data-i18n="scenarioHelp"></div></details>
         <label class="range-title" for="lambda"><span data-i18n="connectivityWeight">Poids de la connectivité</span><output id="lambda-value">0.35</output></label>
         <input id="lambda" type="range" min="0" max="2" step="0.05" value="0.35">
         <p class="micro" data-i18n="proxyNote">Le proxy utilise la surface, jamais des euros. Le coût réel des travaux est inconnu.</p>

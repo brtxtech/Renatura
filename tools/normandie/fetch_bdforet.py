@@ -189,8 +189,14 @@ def main():
     careas = shapely.area(cgeoms)
     fgeoms = np.array([g for _, g, _ in kept], dtype=object)
     groups = np.array([(p.get('tfv_g11') or 'Inconnu') for _, _, p in kept])
+    # reprojected cells / clipped polygons can carry tiny self-intersections: repair before overlay
+    cgeoms = shapely.make_valid(cgeoms)
+    fgeoms = shapely.make_valid(fgeoms)
     li, ci = shapely.STRtree(cgeoms).query(fgeoms, predicate='intersects')
-    inter = shapely.area(shapely.intersection(fgeoms[li], cgeoms[ci]))
+    try:
+        inter = shapely.area(shapely.intersection(fgeoms[li], cgeoms[ci]))
+    except shapely.errors.GEOSException:  # last resort: snap to a 1 cm grid
+        inter = shapely.area(shapely.intersection(fgeoms[li], cgeoms[ci], grid_size=0.01))
     share = collections.defaultdict(lambda: collections.Counter())
     for l, c, a in zip(li, ci, inter):
         share[int(c)][groups[l]] += a
@@ -229,7 +235,7 @@ def main():
     theme = next(t for t in v2['themes'] if t['id'] == 'landuse')
     group = next((g for g in theme['groups'] if g['id'] == 'g_forest_bdforet'), None)
     if group is None:
-        group = {'id': 'g_forest_bdforet', 'display_name': 'Forêts et formations végétales', 'theme': 'landuse', 'layers': []}
+        group = {'id': 'g_forest_bdforet', 'display_name': 'Forêts et formations végétales', 'theme': 'landuse', 'facets': {}, 'selection': {}, 'layers': []}
         theme['groups'].insert(0, group)
         v2['statistics']['groups'] = v2['statistics'].get('groups', 0) + 1
     if not any(l['id'] == 'l_bdforet_v2' for l in group['layers']):

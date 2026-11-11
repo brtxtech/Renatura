@@ -1,0 +1,410 @@
+{
+ "built_at": "2026-11-11T20:11:15+00:00",
+ "models": {
+  "territory_forecast": {
+   "title": "TerritoryForecast",
+   "question": "Quelles mailles vont s’artificialiser dans les 6 prochaines années ?",
+   "sources": [
+    "CORINE Land Cover 1990, 2000R, 2006R, 2012R, 2018 (IGN, WFS)"
+   ],
+   "train": "paires 2000→2006 et 2006→2012",
+   "test": "paire 2012→2018, mailles jamais vues (20 %)",
+   "output": "Probabilité d’artificialisation > 1 point d’ici 2024 (depuis l’état 2018)",
+   "caveats": [
+    "CORINE : unité minimale 25 ha (changements 5 ha) ; les petites extensions urbaines ne sont pas vues.",
+    "Une seule période de test (2012→2018), où l’artificialisation détectée a ralenti.",
+    "Prédire le NIVEAU futur ne bat pas « rien ne change » (tuning.json) : le modèle indique où le changement est probable."
+   ],
+   "task": "classification",
+   "target_label": "artificialisation de plus de 1 point de la maille en 6 ans",
+   "algorithm": "HistGradientBoostingClassifier (scikit-learn) · probabilité d’un événement observé",
+   "features": [
+    {
+     "id": "artificial_fraction",
+     "label": "Part artificialisée (CORINE 1xx)",
+     "available": true
+    },
+    {
+     "id": "urban_fabric_fraction",
+     "label": "Tissu urbain (11x)",
+     "available": true
+    },
+    {
+     "id": "industrial_transport_fraction",
+     "label": "Zones industrielles, commerciales, transports (12x)",
+     "available": true
+    },
+    {
+     "id": "mines_construction_fraction",
+     "label": "Mines, décharges, chantiers (13x)",
+     "available": true
+    },
+    {
+     "id": "green_urban_fraction",
+     "label": "Espaces verts urbains (14x)",
+     "available": true
+    },
+    {
+     "id": "agri_fraction",
+     "label": "Terres agricoles (2xx)",
+     "available": true
+    },
+    {
+     "id": "forest_seminatural_fraction",
+     "label": "Forêts et milieux semi-naturels (3xx)",
+     "available": true
+    },
+    {
+     "id": "wetland_fraction",
+     "label": "Zones humides (4xx)",
+     "available": true
+    },
+    {
+     "id": "water_fraction",
+     "label": "Surfaces en eau (5xx)",
+     "available": true
+    },
+    {
+     "id": "artificial_neigh_3km",
+     "label": "Artificialisation moyenne dans un rayon de 3 km",
+     "available": true
+    },
+    {
+     "id": "artificial_change_prev",
+     "label": "Artificialisation de la maille pendant la période précédente",
+     "available": true
+    },
+    {
+     "id": "artificial_neigh_change_prev",
+     "label": "Artificialisation du voisinage (3 km) pendant la période précédente",
+     "available": true
+    }
+   ],
+   "target_spec": {
+    "id": "artificial_fraction",
+    "label": "artificialisation de plus de 1 point de la maille en 6 ans",
+    "available": true,
+    "horizon_years": 6,
+    "mode": "change"
+   },
+   "n_train": 49574,
+   "n_test": 6063,
+   "last_test_observation_year": "2012",
+   "features_used": [
+    "artificial_fraction",
+    "urban_fabric_fraction",
+    "industrial_transport_fraction",
+    "mines_construction_fraction",
+    "green_urban_fraction",
+    "agri_fraction",
+    "forest_seminatural_fraction",
+    "wetland_fraction",
+    "water_fraction",
+    "artificial_neigh_3km",
+    "artificial_change_prev",
+    "artificial_neigh_change_prev"
+   ],
+   "params": {
+    "max_iter": 300,
+    "learning_rate": 0.05,
+    "l2_regularization": 1.0,
+    "random_state": 42
+   },
+   "features_unavailable": [],
+   "auc": 0.8960299540455083,
+   "average_precision": 0.13070829021241612,
+   "base_rate": 0.013854527461652647,
+   "positive_above": 0.01,
+   "baseline": {
+    "name": "« s'est artificialisée pendant la période précédente »",
+    "auc": 0.635961978034231,
+    "average_precision": 0.037693993076081074
+   },
+   "target_mode": "level",
+   "status": "performant",
+   "beats_baseline": true
+  },
+  "human_pressure": {
+   "title": "HumanPressure",
+   "question": "Quelle pression humaine (population) s’exerce sur la maille ?",
+   "sources": [
+    "INSEE Filosofi 2015 et 2017, carreaux de 1 km (population)",
+    "CORINE Land Cover 2012 et 2018"
+   ],
+   "train": "population 2015 (occupation du sol CORINE 2012)",
+   "test": "population 2017 (CORINE 2018), mailles jamais vues (20 %)",
+   "output": "Pression humaine estimée depuis l’occupation du sol 2018, à côté de la valeur observée 2017",
+   "caveats": [
+    "La population est une mesure de présence humaine ; elle ne couvre ni le trafic de transit, ni l’industrie sans habitants.",
+    "Filosofi publie les carreaux habités ; un carreau absent est compté 0 habitant.",
+    "Les variables viennent de l’édition CORINE la plus proche (2012 pour 2015, 2018 pour 2017) ; routes, arrêts, ICPE et bâti 2017 sont des mesures récentes, supposées stables sur 2015-2017."
+   ],
+   "task": "regression",
+   "target_label": "log10(1 + habitants par km²), INSEE Filosofi",
+   "algorithm": "HistGradientBoostingRegressor (scikit-learn)",
+   "features": [
+    {
+     "id": "artificial_fraction",
+     "label": "Part artificialisée (CORINE 1xx)",
+     "available": true
+    },
+    {
+     "id": "urban_fabric_fraction",
+     "label": "Tissu urbain (11x)",
+     "available": true
+    },
+    {
+     "id": "industrial_transport_fraction",
+     "label": "Zones industrielles, commerciales, transports (12x)",
+     "available": true
+    },
+    {
+     "id": "mines_construction_fraction",
+     "label": "Mines, décharges, chantiers (13x)",
+     "available": true
+    },
+    {
+     "id": "green_urban_fraction",
+     "label": "Espaces verts urbains (14x)",
+     "available": true
+    },
+    {
+     "id": "agri_fraction",
+     "label": "Terres agricoles (2xx)",
+     "available": true
+    },
+    {
+     "id": "forest_seminatural_fraction",
+     "label": "Forêts et milieux semi-naturels (3xx)",
+     "available": true
+    },
+    {
+     "id": "wetland_fraction",
+     "label": "Zones humides (4xx)",
+     "available": true
+    },
+    {
+     "id": "water_fraction",
+     "label": "Surfaces en eau (5xx)",
+     "available": true
+    },
+    {
+     "id": "artificial_neigh_3km",
+     "label": "Artificialisation moyenne dans un rayon de 3 km",
+     "available": true
+    },
+    {
+     "id": "roads_m_ha",
+     "label": "Réseau routier OSM (m/ha)",
+     "available": true
+    },
+    {
+     "id": "transit_stops",
+     "label": "Arrêts de transport OSM",
+     "available": true
+    },
+    {
+     "id": "icpe",
+     "label": "Établissements ICPE",
+     "available": true
+    },
+    {
+     "id": "rail",
+     "label": "Voies ferrées",
+     "available": true
+    },
+    {
+     "id": "built_share_2017",
+     "label": "Part bâtie 2017 (tâche du bâti)",
+     "available": true
+    }
+   ],
+   "target_spec": {
+    "id": "observed_human_pressure",
+    "label": "log10(1 + habitants par km²), INSEE Filosofi",
+    "available": true,
+    "horizon_years": null,
+    "mode": "level"
+   },
+   "n_train": 24787,
+   "n_test": 6063,
+   "last_test_observation_year": "2017",
+   "features_used": [
+    "artificial_fraction",
+    "urban_fabric_fraction",
+    "industrial_transport_fraction",
+    "mines_construction_fraction",
+    "green_urban_fraction",
+    "agri_fraction",
+    "forest_seminatural_fraction",
+    "wetland_fraction",
+    "water_fraction",
+    "artificial_neigh_3km",
+    "roads_m_ha",
+    "transit_stops",
+    "icpe",
+    "rail",
+    "built_share_2017"
+   ],
+   "params": {
+    "max_iter": 180,
+    "learning_rate": 0.06,
+    "l2_regularization": 1.0,
+    "random_state": 42
+   },
+   "features_unavailable": [],
+   "mae": 0.2324176765136462,
+   "rmse": 0.31551754882688393,
+   "r2": 0.7320960756188672,
+   "baseline": {
+    "name": "régression linéaire sur la part artificialisée",
+    "mae": 0.37725443812588283,
+    "r2": 0.32021195479801634
+   },
+   "target_mode": "level",
+   "status": "performant",
+   "beats_baseline": true
+  },
+  "eco_vulnerability": {
+   "title": "EcoVulnerability",
+   "question": "Quelles mailles risquent de perdre de l’habitat naturel ?",
+   "sources": [
+    "CORINE Land Cover 1990, 2000R, 2006R, 2012R, 2018 (IGN, WFS)"
+   ],
+   "train": "paire 2000→2006",
+   "test": "paire 2006→2012, mailles jamais vues (20 %) — 2012→2018 n’a que 0,09 % de mailles avec perte, trop peu pour évaluer",
+   "output": "Probabilité de perte d’habitat naturel > 1 point d’ici 2024 (depuis l’état 2018)",
+   "caveats": [
+    "La perte d’habitat est vue par CORINE (25 ha) : haies, mares et petits boisements ne sont pas mesurés.",
+    "Test sur 2006→2012 : CORINE 2018 ne détecte presque aucune perte sur 2012→2018 (0,09 % des mailles).",
+    "Probabilité d’un événement observé, pas un indice d’état écologique."
+   ],
+   "task": "classification",
+   "target_label": "perte d'habitat naturel (forêts, milieux semi-naturels, zones humides) > 1 point en 6 ans",
+   "algorithm": "HistGradientBoostingClassifier (scikit-learn) · probabilité d’un événement observé",
+   "features": [
+    {
+     "id": "forest_seminatural_fraction",
+     "label": "Forêts et milieux semi-naturels (3xx)",
+     "available": true
+    },
+    {
+     "id": "wetland_fraction",
+     "label": "Zones humides (4xx)",
+     "available": true
+    },
+    {
+     "id": "agri_fraction",
+     "label": "Terres agricoles (2xx)",
+     "available": true
+    },
+    {
+     "id": "artificial_fraction",
+     "label": "Part artificialisée (CORINE 1xx)",
+     "available": true
+    },
+    {
+     "id": "water_fraction",
+     "label": "Surfaces en eau (5xx)",
+     "available": true
+    },
+    {
+     "id": "mines_construction_fraction",
+     "label": "Mines, décharges, chantiers (13x)",
+     "available": true
+    },
+    {
+     "id": "artificial_neigh_3km",
+     "label": "Artificialisation moyenne dans un rayon de 3 km",
+     "available": true
+    },
+    {
+     "id": "artificial_change_prev",
+     "label": "Artificialisation de la maille pendant la période précédente",
+     "available": true
+    },
+    {
+     "id": "artificial_neigh_change_prev",
+     "label": "Artificialisation du voisinage (3 km) pendant la période précédente",
+     "available": true
+    },
+    {
+     "id": "natural_loss_prev",
+     "label": "Perte d’habitat naturel pendant la période précédente",
+     "available": true
+    }
+   ],
+   "target_spec": {
+    "id": "observed_ecological_impact",
+    "label": "perte d'habitat naturel (forêts, milieux semi-naturels, zones humides) > 1 point en 6 ans",
+    "available": true,
+    "horizon_years": null,
+    "mode": "level"
+   },
+   "n_train": 24787,
+   "n_test": 6063,
+   "last_test_observation_year": "2006",
+   "features_used": [
+    "forest_seminatural_fraction",
+    "wetland_fraction",
+    "agri_fraction",
+    "artificial_fraction",
+    "water_fraction",
+    "mines_construction_fraction",
+    "artificial_neigh_3km",
+    "artificial_change_prev",
+    "artificial_neigh_change_prev"
+   ],
+   "params": {
+    "max_iter": 300,
+    "learning_rate": 0.05,
+    "l2_regularization": 1.0,
+    "random_state": 42
+   },
+   "features_unavailable": [
+    "natural_loss_prev"
+   ],
+   "auc": 0.8707867071669735,
+   "average_precision": 0.04962433497416038,
+   "base_rate": 0.009731156193303645,
+   "positive_above": 0.01,
+   "baseline": {
+    "name": "« a perdu de l'habitat pendant la période précédente »",
+    "auc": 0.5017121354125498,
+    "average_precision": 0.020513192734700564
+   },
+   "target_mode": "level",
+   "status": "performant",
+   "beats_baseline": true
+  }
+ },
+ "data_summary": {
+  "cells": 30850,
+  "years": [
+   2000,
+   2006,
+   2012,
+   2018
+  ],
+  "rows": 123400,
+  "source": "CORINE Land Cover 1990 (période précédente), 2000R, 2006R, 2012R, 2018 · INSEE Filosofi 2015, 2017",
+  "grid": "Mailles hexagonales de 1 km² (Lambert-93), 30 850 sur la Normandie",
+  "periods": [
+   {
+    "periode": "2000→2006",
+    "changement_moyen_pts": 0.373,
+    "mailles_qui_changent": 1739
+   },
+   {
+    "periode": "2006→2012",
+    "changement_moyen_pts": 0.554,
+    "mailles_qui_changent": 2276
+   },
+   {
+    "periode": "2012→2018",
+    "changement_moyen_pts": 0.098,
+    "mailles_qui_changent": 439
+   }
+  ]
+ }
+}

@@ -21,6 +21,9 @@
       <a href="acheteur-normandie.html">Prix &amp; bénéfice</a>
       <a href="climat-normandie.html">Climat</a>
       <a href="ville-normandie.html">Analyse par commune</a>
+      <a href="assistant.html">Assistant IA</a>
+      <a href="modeles.html">Modèles IA</a>
+      <a href="connaissances.html">Connaissances</a>
       <a href="data.html">Ajouter des données</a>
     </nav>
   `;
@@ -30,36 +33,18 @@
   const rebase = root => { if (base) root.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (!/^(https?:|#|\/|\.\.\/)/.test(h)) a.setAttribute('href', base + h); }); };
   rebase(header);
 
-  // Conserva los elementos originales y sus identificadores:
-  // los scripts existentes pueden seguir utilizándolos.
-  const tools = document.createElement('details');
+  // Page-specific controls (tabs, language, share, sources) are moved, with their ids and listeners, into a
+  // plain always-visible bar under the site header (no "Outils de cette page" fold-out).
+  const tools = document.createElement('div');
   tools.id = 'renatura-page-tools';
-
-  const summary = document.createElement('summary');
-  summary.textContent = 'Outils de cette page';
-  tools.append(summary);
-
-  const content = document.createElement('div');
-  content.className = 'rh-tools-content';
-
-  const controls = [
-    ...old.querySelectorAll('[data-page]'),
-    ...old.querySelectorAll('.top-actions'),
-    ...old.querySelectorAll('#sources')
-  ];
-
-  for (const element of controls) {
-    if (!content.contains(element)) content.append(element);
+  for (const element of [...old.querySelectorAll('[data-page]'), ...old.querySelectorAll('.top-actions'), ...old.querySelectorAll('#sources')]) {
+    if (!tools.contains(element)) tools.append(element);
   }
-
   old.setAttribute('data-renatura-old-header', '');
   old.hidden = true;
   old.before(header);
+  if (tools.childElementCount) old.after(tools);
 
-  if (content.childElementCount) {
-    tools.append(content);
-    old.after(tools);
-  }
   // Explorer menu: a floating layer appended to <body> (outside the scrolling nav), opened by the button.
   const button = header.querySelector('#rh-explorer-btn');
   if (button) {

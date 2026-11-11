@@ -81,6 +81,68 @@ async function loadCells() {
 
 // Regional cells carry a placeholder name ("Maille régionale H1_…"): resolve the real commune from the
 // cell -> commune index built by tools/normandie/build_display.py (cells_points.json). Non-blocking.
+// Land acquisition cost per cell for the "Budget foncier" constraint: DVF 2021-2025 median €/ha (farmland,
+// else all rural land) × cell area, in k€ (tools/normandie/price_cells.py -> buyer_cells.json). Non-blocking.
+async function attachLandPrices() {
+  try {
+    const buyer = await readLargeJSON('buyer_cells.json');
+    const price = new Map(buyer.cells.map(c => [c.id, (c.price?.agri || c.price?.rural)?.median]));
+    const designations = new Map(buyer.cells.map(c => [c.id, c.designations || []]));
+    for (const site of state.sites) {
+      site.designations = designations.get(site.id) || [];
+      site.protection_status = protectionStatus(designations.get(site.id));
+      const eurHa = price.get(site.id);
+      site.land_eur_ha = Number.isFinite(eurHa) ? eurHa : null;
+      site.land_cost_keur = Number.isFinite(eurHa) ? eurHa * (site.area_ha || 0) / 1000 : null;
+    }
+    if (state.metric === 'PP') { syncControls(); recalculate(); }  // protection statuses arrived
+  } catch (error) { console.warn('Land prices unavailable:', error.message); }
+}
+
+// Renatura AI predictions (pipeline/renatura_ai/run_normandie.py -> ml_predictions.json + ml_status.json).
+// Map: regional rank 0-100 of each prediction (probabilities are mostly ~1 %); panel: the real value + model status.
+const ML_METRICS = {
+  ML_ARTIF: { field: 'artificialisation_risk', model: 'territory_forecast', fr: 'Risque d’artificialisation 2018→2024 · rang régional (0–100)', en: 'Artificialisation risk 2018→2024 · regional rank (0–100)' },
+  ML_HABITAT: { field: 'habitat_loss_risk', model: 'eco_vulnerability', fr: 'Risque de perte d’habitat naturel 2018→2024 · rang régional (0–100)', en: 'Natural habitat loss risk 2018→2024 · regional rank (0–100)' },
+  ML_PRESSURE: { field: 'human_pressure_estimated', model: 'human_pressure', fr: 'Pression humaine estimée (population) · rang régional (0–100)', en: 'Estimated human pressure (population) · regional rank (0–100)' },
+};
+const ML_STATUS_FR = { performant: 'performant', trained_exploratory: 'exploratoire', trained_not_better_than_baseline: 'ne bat pas sa référence', blocked: 'non disponible' };
+async function applyPredictions(collection) {
+  try {
+    const [pred, status] = await Promise.all([readJSON('ml_predictions.json'), readJSON('ml_status.json')]);
+    state.mlStatus = status.models || {};
+    const sites = collection.features.map(f => f.properties);
+    for (const [key, m] of Object.entries(ML_METRICS)) {
+      const vals = sites.map(site => pred.cells[site.id]?.[m.field]).map(v => (Number.isFinite(v) ? v : null));
+      const order = vals.map((v, i) => [v, i]).filter(([v]) => v !== null).sort((a, b) => a[0] - b[0]);
+      const ranks = new Array(sites.length).fill(null);
+      order.forEach(([, i], r) => { ranks[i] = order.length > 1 ? (100 * r) / (order.length - 1) : 50; });
+      sites.forEach((site, i) => { site[key] = ranks[i]; site[`${key}_value`] = vals[i]; });
+    }
+    sites.forEach(site => { site.ML_PRESSURE_OBS = pred.cells[site.id]?.human_pressure_observed_2017 ?? null; });
+    $$('#metric option[data-ml]').forEach(o => { o.disabled = false; });
+    if (ML_METRICS[state.metric]) recalculate();
+    if (state.selected) showDetail(state.selected, false);
+  } catch (error) {
+    console.info(`Model predictions unavailable (${error.message})`);
+  }
+}
+
+function mlBlock(site, en) {
+  if (!state.mlStatus || site.ML_ARTIF_value === undefined) return '';
+  const st = k => ML_STATUS_FR[state.mlStatus[k]?.status] || '—';
+  const pct = v => (Number.isFinite(v) ? `${num(100 * v, 1)} %` : '—');
+  const dens = v => (Number.isFinite(v) ? `${num(10 ** v - 1)} hab/km²` : '—');
+  return `<div class="ml-block" style="margin-top:10px;padding:10px;border:1px solid #dde4d8;border-radius:10px;background:#fbfcf8">
+    <strong style="font-size:13px">${en ? 'Renatura AI models' : 'Modèles IA Renatura'}</strong> <a class="micro" href="modeles.html">${en ? 'how they learn' : 'comment ils apprennent'}</a>
+    <dl class="detail-raw" style="margin:6px 0 0">
+      <dt>${en ? 'Artificialisation risk 2018→2024' : 'Risque d’artificialisation 2018→2024'}</dt><dd>${pct(site.ML_ARTIF_value)} <span class="micro">· ${st('territory_forecast')}</span></dd>
+      <dt>${en ? 'Natural habitat loss risk 2018→2024' : 'Risque de perte d’habitat naturel'}</dt><dd>${pct(site.ML_HABITAT_value)} <span class="micro">· ${st('eco_vulnerability')}</span></dd>
+      <dt>${en ? 'Human pressure (estimated / INSEE 2017)' : 'Pression humaine (estimée / INSEE 2017)'}</dt><dd>${dens(site.ML_PRESSURE_value)} / ${dens(site.ML_PRESSURE_OBS)} <span class="micro">· ${st('human_pressure')}</span></dd>
+    </dl>
+    <p class="micro" style="margin:4px 0 0">${en ? 'Probabilities of events observed by CORINE (25 ha units); about 1 % of cells change in 6 years.' : 'Probabilités d’événements observés par CORINE (unité 25 ha) ; environ 1 % des mailles changent en 6 ans.'}</p></div>`;
+}
+
 async function applyCommuneNames(collection) {
   try {
     const points = await readLargeJSON('cells_points.json');
@@ -144,7 +206,7 @@ function loadURL() {
     try { state.weights = normaliseWeights(weights); } catch { /* Keep documented defaults. */ }
   }
   const metric = params.get('metric');
-  if (['RP', 'PP', 'V', 'D', 'P', 'CTX', 'O', 'betweenness', 'EXPLORATORY'].includes(metric)) state.metric = metric;
+  if (['RP', 'PP', 'V', 'D', 'P', 'CTX', 'O', 'betweenness', 'EXPLORATORY', 'ML_ARTIF', 'ML_HABITAT', 'ML_PRESSURE'].includes(metric)) state.metric = metric;
   if (params.has('partial')) state.partial = params.get('partial') === '1';
   for (const key of ['minimum', 'confidence']) {
     const value = Number(params.get(key));
@@ -169,7 +231,7 @@ function applyLanguage() {
   document.documentElement.lang = state.language;
   $$('[data-i18n]').forEach(element => {
     const key = element.dataset.i18n;
-    if (key === 'headline') element.innerHTML = text(key);
+    if (key === 'headline' || key === 'scenarioHelp') element.innerHTML = text(key);
     else element.textContent = text(key);
   });
   $('#language').textContent = state.language === 'fr' ? 'EN' : 'FR';
@@ -252,10 +314,50 @@ function exploratoryIndex(site) {
   return denominator > 0 ? numerator / denominator : null;
 }
 
+// ---------- Protection priority (PP): where valuable, still-intact nature is under human pressure.
+// Same formula as tools/normandie/regional_model/scoring.py protection_score(): V × (1 − D/100) × P/100,
+// then expressed as a percentile rank over Normandy (0–100) so the map uses the full colour range.
+// Independent of the RP weights. Protection status comes from the designations touching each cell (buyer_cells.json).
+const STRONG = ['Réserve naturelle nationale', 'Réserve naturelle régionale', 'APB'];
+const CONTRACT = ['Natura 2000 ZSC', 'Natura 2000 ZPS', 'ORE existante'];
+const INVENTORY = ['ZNIEFF 1', 'ZNIEFF 2'];
+const PROTECTION_LABEL = {
+  strong: ['Protection forte (réserve, APB)', 'Strong protection (reserve, biotope order)'],
+  contract: ['Natura 2000 / ORE', 'Natura 2000 / conservation easement'],
+  inventory: ['Inventaire seul (ZNIEFF)', 'Inventory only (ZNIEFF)'],
+  none: ['Aucune protection', 'No protection'],
+  unknown: ['Statut inconnu', 'Unknown status'],
+};
+const GAP_THRESHOLD = 70;  // PP ≥ 70 (top 30 % of Normandy) without regulatory or contractual protection = protection gap
+const protectionLabel = site => PROTECTION_LABEL[site.protection_status || 'unknown'][state.language === 'en' ? 1 : 0];
+const isGap = site => Number.isFinite(site.PP) && site.PP >= GAP_THRESHOLD && ['none', 'inventory'].includes(site.protection_status);
+function computeProtection() {
+  const rows = state.sites.map(site => {
+    const ok = [site.V, site.D, site.P].every(Number.isFinite);
+    return [site, ok ? site.V * (1 - site.D / 100) * site.P / 100 : null];
+  });
+  const valid = rows.filter(([, raw]) => raw !== null).sort((a, b) => a[1] - b[1]);
+  const n = valid.length;
+  rows.forEach(([site]) => { site.PP = null; site.PP_raw = null; });
+  valid.forEach(([site, raw], i) => { site.PP_raw = raw; site.PP = n > 1 ? 100 * i / (n - 1) : 100; });
+}
+function protectionStatus(designations) {
+  if (!designations) return 'unknown';
+  if (designations.some(d => STRONG.includes(d))) return 'strong';
+  if (designations.some(d => CONTRACT.includes(d))) return 'contract';
+  if (designations.some(d => INVENTORY.includes(d))) return 'inventory';
+  return 'none';
+}
+function rankForView(sites) {
+  if (state.metric !== 'PP') return rankSites(sites, state.weights, state.partial, REGIONAL_MIN_V);
+  return sites.filter(site => Number.isFinite(site.PP)).map(site => ({ ...site, score: site.PP }))
+    .sort((a, b) => b.PP - a.PP || a.id.localeCompare(b.id));
+}
+
 function metricValue(site) {
   if (state.metric === 'EXPLORATORY') return exploratoryIndex(site);
   if (state.metric === 'RP') return scoreSite(site, state.weights, state.partial, REGIONAL_MIN_V).score;
-  if (state.metric === 'PP') return null;
+  if (state.metric === 'PP') return site.PP;
   if (state.metric === 'betweenness') return Number.isFinite(site.betweenness) ? site.betweenness * 100 : null;
   if (state.metric === 'CTX') return site.context_score;
   return site[state.metric];
@@ -269,9 +371,12 @@ function recalculate() {
       .toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const value = metricValue(site);
     return (!query || name.includes(query)) && site.coverage >= state.confidence
-      && (state.minimum === 0 || (Number.isFinite(value) && value >= state.minimum));
+      && (state.minimum === 0 || (Number.isFinite(value) && value >= state.minimum))
+      && (state.metric !== 'PP' || !state.gapsOnly || isGap(site));
   });
+  // The scenario lab always works on restoration priority; the ranking table follows the mapped view.
   state.ranked = rankSites(state.filtered, state.weights, state.partial, REGIONAL_MIN_V);
+  state.viewRanked = rankForView(state.filtered);
   const filteredIds = new Set(state.filtered.map(site => site.id));
   const selected = new Set(state.scenario && !state.scenarioStale ? state.scenario.selected : []);
   const collection = {
@@ -286,7 +391,7 @@ function recalculate() {
   };
   atlas.update(collection);
   $('#visible-count').textContent = `${num(state.filtered.length)} / ${num(state.sites.length)} ${text('units').toLowerCase()}`;
-  $('#legend-title').textContent = state.metric === 'EXPLORATORY' ? 'Indice exploratoire · données disponibles' : state.metric === 'RP' ? text('score') : state.metric === 'CTX' ? 'Contexte documentaire · pas un score écologique' : state.metric;
+  $('#legend-title').textContent = ML_METRICS[state.metric] ? ML_METRICS[state.metric][state.language === 'en' ? 'en' : 'fr'] : state.metric === 'PP' ? (state.language === 'en' ? 'Protection priority · percentile' : 'Priorité de protection · rang 0–100') : state.metric === 'EXPLORATORY' ? 'Indice exploratoire · données disponibles' : state.metric === 'RP' ? text('score') : state.metric === 'CTX' ? 'Contexte documentaire · pas un score écologique' : state.metric;
   renderRanking();
   if (state.selected) showDetail(state.selected, false);
   updateSensitivityContext();
@@ -300,7 +405,22 @@ function scheduleRender() {
 }
 
 function renderRanking() {
-  $('#ranking-body').innerHTML = state.ranked.slice(0, 20).map((site, index) => `
+  const pp = state.metric === 'PP', en = state.language === 'en';
+  const head = $('#ranking-body').closest('table').querySelector('thead tr');
+  head.innerHTML = pp
+    ? `<th>#</th><th>${e(text('commune'))}</th><th>PP</th><th>V</th><th>D</th><th>P</th><th>${en ? 'Protection' : 'Protection actuelle'}</th>`
+    : `<th>#</th><th>${e(text('commune'))}</th><th>RP</th><th>V</th><th>D</th><th>${e(text('coverage'))}</th><th>ha</th>`;
+  const rows = (pp ? state.viewRanked : state.ranked) || [];
+  $('#ranking-body').innerHTML = rows.slice(0, 20).map((site, index) => pp ? `
+    <tr>
+      <td>${index + 1}</td>
+      <td><button data-select="${e(site.id)}">${e(site.commune)}<small>${e(site.id)}</small></button></td>
+      <td>${num(site.PP, 1)}</td>
+      <td>${num(site.V, 1)}</td>
+      <td>${num(site.D, 1)}</td>
+      <td>${num(site.P, 1)}</td>
+      <td>${isGap(site) ? `<b style="color:#9a3412">${en ? 'Gap' : 'Lacune'}</b> · ` : ''}${e(protectionLabel(site))}</td>
+    </tr>` : `
     <tr>
       <td>${index + 1}</td>
       <td><button data-select="${e(site.id)}">${e(site.commune)}<small>${e(site.id)}</small></button></td>
@@ -311,6 +431,18 @@ function renderRanking() {
       <td>${num(site.area_ha, 1)}</td>
     </tr>`).join('') || `<tr><td colspan="7">${e(text('noSelection'))}</td></tr>`;
   $$('[data-select]').forEach(button => button.addEventListener('click', () => showDetail(button.dataset.select)));
+}
+
+function protectionBlock(site) {
+  const en = state.language === 'en';
+  if (!Number.isFinite(site.PP)) return '';
+  const des = (site.designations || []).filter(d => [...STRONG, ...CONTRACT, ...INVENTORY, 'Parc naturel régional'].includes(d));
+  return `<div class="protection-block ${isGap(site) ? 'is-gap' : ''}">
+    <div class="range-title"><span>${en ? 'Protection priority (PP)' : 'Priorité de protection (PP)'}</span><strong>${num(site.PP, 0)} /100</strong></div>
+    <p class="micro">${en ? 'Status' : 'Statut actuel'} : <b>${e(protectionLabel(site))}</b>${des.length ? ` — ${des.map(e).join(', ')}` : ''}</p>
+    ${isGap(site) ? `<p class="micro"><b>${en ? 'Protection gap' : 'Lacune de protection'}</b> : ${en ? 'valuable, still intact nature under pressure, without regulatory or contractual protection.' : 'nature de valeur, encore peu dégradée et sous pression, sans protection réglementaire ni contractuelle.'}</p>` : ''}
+    <p class="micro">PP = V ${num(site.V, 0)} × (1 − D ${num(site.D, 0)}/100) × P ${num(site.P, 0)}/100 = ${num(site.PP_raw, 1)} → ${en ? 'rank' : 'rang'} ${num(site.PP, 0)}/100 ${en ? 'in Normandy' : 'en Normandie'}.</p>
+  </div>`;
 }
 
 async function showDetail(id, fly = true) {
@@ -329,7 +461,9 @@ async function showDetail(id, fly = true) {
     <h3>${e(site.commune)}</h3>
     <p class="micro">${num(site.area_ha, 1)} ha · ${num(site.coverage)}% ${text('coverage').toLowerCase()}</p>
     <div class="detail-score">${num(score.score, 1)} <small>/100 · ${text('score')}</small></div>
+    ${protectionBlock(site)}
     ${Number.isFinite(site.V) && site.V < 10 ? `<p class="micro" style="color:#9a5b16">${en ? 'Low ecological value (V < 10): little natural structure left in this cell.' : 'Valeur écologique faible (V < 10) : peu de structure naturelle restante dans cette maille.'}</p>` : ''}
+    ${mlBlock(site, en)}
     ${KEYS.map((key, i) => `
       <div class="breakdown-row">
         <div><span>${key} · ${e(text('breakdown')[i])}</span><strong>${num(site[key])}</strong></div>
@@ -359,8 +493,8 @@ async function showDetail(id, fly = true) {
 function renderPresets() {
   $('#presets').innerHTML = state.presets.map((preset, index) => `
     <button class="preset-card ${state.scenario?.id === preset.id && !state.scenarioStale ? 'active' : ''}" data-preset="${index}">
-      <span><strong>${e(state.language === 'fr' ? preset.name : ['Focused intervention', 'Balanced network', 'Territorial ambition', '500 ha envelope', '1,000 proxy units'][index])}</strong>
-      <small>${num(preset.budget)} ${preset.mode === 'sites' ? 'sites' : preset.mode === 'hectares' ? 'ha' : 'proxy'} · ${preset.status === 'OPTIMAL' ? 'ILP ✓' : 'ILP'}</small></span>
+      <span><strong>${e(state.language === 'fr' ? preset.name : ['Focused intervention', 'Balanced network', 'Territorial ambition', '500 ha envelope', '€5M land budget'][index])}</strong>
+      <small>${num(preset.budget)} ${preset.mode === 'sites' ? 'sites' : preset.mode === 'hectares' ? 'ha' : 'k€'} · ${preset.status === 'OPTIMAL' ? 'ILP ✓' : 'ILP'}</small></span>
       <span>↗</span>
     </button>`).join('');
   $$('[data-preset]').forEach(button => button.addEventListener('click', () => {
@@ -395,8 +529,17 @@ function syncControls() {
   $('#minimum-value').textContent = state.minimum;
   $('#confidence-value').textContent = `${state.confidence}%`;
   $('#lambda-value').textContent = Number($('#lambda').value).toFixed(2);
-  $('#budget-unit').textContent = $('#constraint').value === 'sites' ? 'sites' : $('#constraint').value === 'hectares' ? 'ha' : 'proxy';
+  $('#budget-unit').textContent = $('#constraint').value === 'sites' ? 'sites' : $('#constraint').value === 'hectares' ? 'ha' : 'k€';
   $$('[data-metric]').forEach(button => button.classList.toggle('active', button.dataset.metric === state.metric));
+  $('#protection-tools').hidden = state.metric !== 'PP';
+  if (state.metric === 'PP' && state.sites?.length) {
+    const scored = state.sites.filter(s => Number.isFinite(s.PP)), high = scored.filter(s => s.PP >= GAP_THRESHOLD);
+    const by = k => high.filter(s => s.protection_status === k).length;
+    const en = state.language === 'en';
+    $('#protection-summary').innerHTML = high.some(s => s.protection_status) ? `${en ? 'Top 30 % (PP ≥ 70)' : 'Les 30 % les plus prioritaires (PP ≥ 70)'} : <b>${num(high.length)}</b> ${en ? 'cells' : 'mailles'} —
+      ${num(by('strong'))} ${en ? 'strongly protected' : 'en protection forte'}, ${num(by('contract'))} Natura 2000 / ORE, ${num(by('inventory'))} ${en ? 'ZNIEFF only' : 'en ZNIEFF seule'},
+      <b>${num(by('none'))}</b> ${en ? 'without any designation' : 'sans aucune désignation'}. <b>${num(high.filter(isGap).length)}</b> ${en ? 'protection gaps' : 'lacunes de protection'}.` : (en ? 'Loading protection statuses…' : 'Chargement des statuts de protection…');
+  }
 }
 
 function invalidateScenario() {
@@ -430,10 +573,19 @@ function renderResult() {
     <div class="comparison-bar"><i style="width:${result.objective / peak * 100}%"></i></div>
     <div class="range-title"><span>${text('baseline')}</span><strong>${num(result.baseline_objective, 1)}</strong></div>
     <div class="comparison-bar"><i style="width:${result.baseline_objective / peak * 100}%;background:#a4b59b"></i></div>
-    <p class="micro">${text('upper')}: ${num(result.upper_bound, 1)} · ${text('gap')}: ${num(result.gap_percent, 1)}%</p>
+    <p class="micro">${text('upper')}: ${num(result.upper_bound, 1)} · ${text('gap')}: ${num(result.gap_percent, 1)}%${result.eligible != null ? ` · ${num(result.eligible)} ${state.language === 'fr' ? 'mailles éligibles' : 'eligible cells'} (≥ ${num(result.min_area)} ha)` : ''}</p>
+    ${landCostLine(result)}
     ${selectedSitesList(result)}
     <div class="coverage-note"><span>!</span><p>${text('partialNotice')}</p></div>`;
   $$('#scenario-result [data-site]').forEach(button => button.addEventListener('click', () => showDetail(button.dataset.site)));
+}
+
+function landCostLine(result) {
+  const lookup = new Map(state.sites.map(site => [site.id, site]));
+  const costs = result.selected.map(id => lookup.get(id)?.land_cost_keur).filter(Number.isFinite);
+  if (!costs.length) return '';
+  const total = costs.reduce((a, b) => a + b, 0);
+  return `<p class="micro">${state.language === 'fr' ? 'Coût foncier indicatif (DVF)' : 'Indicative land cost (DVF)'} : <b>${num(total / 1000, 1)} M€</b>${costs.length < result.selected.length ? ` (${costs.length}/${result.selected.length})` : ''}</p>`;
 }
 
 // The retained cells, best score first: commune, cell id, priority and criteria. Click = open on the map.
@@ -457,7 +609,7 @@ function selectedSitesList(result) {
 
 function startWorker() {
   if (state.worker) return;
-  state.worker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+  state.worker = new Worker(new URL('./worker.js?v=20261111-scenarios2', import.meta.url), { type: 'module' });
   state.worker.onmessage = event => {
     const message = event.data;
     const pending = state.pending.get(message.requestId);
@@ -515,6 +667,7 @@ async function runScenario() {
       partial: state.partial,
       mode: $('#constraint').value,
       budget,
+      minArea: Number($('#min-area').value) || 0,
       lambda: Number($('#lambda').value),
     });
     state.scenario = { ...result, scope };
@@ -544,9 +697,9 @@ function download(name, contents, type = 'application/json') {
 }
 
 function exportRanking(type) {
-  const top = state.ranked.slice(0, 20);
+  const top = (state.metric === 'PP' ? state.viewRanked : state.ranked).slice(0, 20);
   if (type === 'csv') {
-    const keys = ['id', 'commune', 'score', 'V', 'D', 'P', 'O', 'coverage', 'area_ha', 'partial'];
+    const keys = state.metric === 'PP' ? ['id', 'commune', 'PP', 'PP_raw', 'V', 'D', 'P', 'protection_status', 'area_ha'] : ['id', 'commune', 'score', 'V', 'D', 'P', 'O', 'coverage', 'area_ha', 'partial'];
     const rows = [keys.map(csvCell).join(','), ...top.map(site => keys.map(key => csvCell(site[key])).join(','))];
     download('renatura-top20.csv', '\uFEFF' + rows.join('\r\n'), 'text/csv;charset=utf-8');
   } else {
@@ -671,6 +824,7 @@ function wireEvents() {
     syncControls();
     recalculate();
   }
+  $('#gaps-only').addEventListener('change', event => { state.gapsOnly = event.target.checked; recalculate(); });
   $('#metric').addEventListener('change', event => setMetric(event.target.value));
   $$('[data-metric]').forEach(button => button.addEventListener('click', () => setMetric(button.dataset.metric)));
   $('#reset-weights').addEventListener('click', () => {
@@ -714,7 +868,10 @@ function wireEvents() {
       catch (error) { toast(error.message); }
     }
   });
-  for (const id of ['constraint', 'budget', 'lambda']) {
+  // Sensible default envelope when the constraint type changes (12 sites ≈ 1 200 ha ≈ 10 M€ of farmland).
+  const DEFAULT_BUDGET = { sites: 12, hectares: 500, proxy: 5000 };
+  $('#constraint').addEventListener('change', () => { $('#budget').value = DEFAULT_BUDGET[$('#constraint').value]; });
+  for (const id of ['constraint', 'budget', 'lambda', 'min-area']) {
     $(`#${id}`).addEventListener('input', () => {
       invalidateScenario();
       syncControls();
@@ -787,7 +944,10 @@ async function initialise() {
     }
 
     state.sites = collection.features.map(feature => feature.properties);
+    computeProtection();
     applyCommuneNames(collection);
+    applyPredictions(collection);
+    attachLandPrices();
     const rendered = recalculate();
     renderStatistics();
     renderRegionalCatalogue();

@@ -62,9 +62,10 @@ th { color: var(--muted); }
 /* ---------- n8n-style workflow canvas ---------- */
 .graph.n8n { display: block !important; padding: 0 !important; position: relative; }
 .graph.n8n .branch-note { display: none; }
-.n8n-viewport { position: relative; overflow: auto; border-radius: 12px; padding: 4px;
+.n8n-viewport { position: relative; overflow: auto; border-radius: 12px; padding: 56px 16px 16px;
   background-color: #f6f8f4; background-image: radial-gradient(#cfd9cb 1px, transparent 1px); background-size: 18px 18px; }
-.n8n-stage { position: relative; transform-origin: 0 0; }
+.n8n-sizer { position: relative; margin: 0 auto; }  /* scaled graph size: centred when smaller than the frame, scrollable when larger */
+.n8n-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .n8n-edges { position: absolute; inset: 0; overflow: visible; pointer-events: none; }
 .n8n-edges marker path { fill: #9fb3a6; }
 .n8n-edge { fill: none; stroke: #b8c7bd; stroke-width: 2.5; marker-end: url(#n8n-arrow); }
@@ -107,6 +108,7 @@ th { color: var(--muted); }
 .port.out { right: -7px; }
 .box.n8n-node.good .port, .box.n8n-node.selected .port { border-color: #2f7d5b; }
 .box.n8n-node[data-box="reference"] .port.in, .box.n8n-node[data-box="datastore"] .port.out, .box.n8n-node[data-box="quarantine"] .port.out { display: none; }
+.n8n-bar { position: relative; }  /* frame: toolbar inside, in a reserved top band of the canvas (never over the boxes) */
 .n8n-zoom { position: absolute; top: 10px; right: 10px; z-index: 5; display: flex; gap: 4px; background: #fff; border: 1px solid #dde4d8; border-radius: 8px; padding: 3px; }
 .n8n-zoom button { border: 0; background: none; padding: 4px 9px; border-radius: 6px; font: 600 13px system-ui, sans-serif; color: #173d31; }
 .n8n-zoom button:hover { background: #eef3ec; }
@@ -116,7 +118,7 @@ th { color: var(--muted); }
 
 /* bigger workflow: full-width canvas, larger cards and text */
 main { max-width: 1800px; }
-.n8n-viewport { min-height: 380px; }
+/* height follows the fitted graph (see fitGraph in app.js) */
 .box.n8n-node h3 { font-size: 16px; }
 .box.n8n-node small { font-size: 12px; }
 .box.n8n-node .box-description { font-size: 13.5px; }

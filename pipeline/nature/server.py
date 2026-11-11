@@ -388,5 +388,11 @@ try:
     app.mount('/workbench', workbench_app)
 except Exception as _error:  # missing optional dependency (jsonschema, pillow…): the rest of the site still works
     print('Atelier de données not mounted:', _error)
+# Assistant IA (local open model via Ollama + tools on the regional cells): /api/assistant/*
+try:
+    from pipeline.assistant.chat import router as assistant_router
+    app.include_router(assistant_router)
+except Exception as _error:
+    print('Assistant not mounted:', _error)
 # follow_symlink: dist/data/species-images is a link to datasets/normandie_species/images
 app.mount('/', StaticFiles(directory=ROOT / 'dist', html=True, follow_symlink=True), name='site')
