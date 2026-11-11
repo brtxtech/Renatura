@@ -25,3 +25,25 @@
 .sp-panel a.outline{display:inline-block;border:1px solid #b9cbb2;border-radius:5px;padding:7px 11px;font-size:12px;text-decoration:none;color:var(--ink)}
 .sp-legend-note{margin-top:22px;max-width:900px}
 .leaflet-popup-content{font:12px system-ui}
+
+.sp-section{margin-top:28px}
+.sp-section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:12px}
+.sp-section-head h2{margin:2px 0 4px;font-size:20px}
+.sp-chips{display:flex;gap:6px;flex-wrap:wrap}
+.sp-chip{border:1px solid var(--line);border-radius:999px;background:#fff;padding:6px 12px;font:600 12px system-ui;color:var(--muted);cursor:pointer}
+.sp-chip.active{background:#173d31;color:#fff;border-color:#173d31}
+.sp-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.sp-card{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.sp-card .main{width:100%;aspect-ratio:4/3;object-fit:cover;background:#e9eee4;cursor:pointer;display:block}
+.sp-card .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;padding:2px}
+.sp-card .thumbs img{width:100%;aspect-ratio:1;object-fit:cover;background:#e9eee4;cursor:pointer;display:block}
+.sp-card .body{padding:10px 12px 12px}
+.sp-card h3{margin:0;font-size:14px;cursor:pointer}
+.sp-card h3:hover{text-decoration:underline}
+.sp-card .sci{color:var(--muted);font-style:italic;font-size:12px;margin:1px 0 6px}
+.sp-card .meta{font-size:11px;color:var(--muted);margin-top:6px}
+.sp-badge.cr,.sp-badge.en{background:#f7dede;color:#8f2e2e}
+.sp-badge.vu{background:#fdecd2;color:#8a5a12}
+.sp-badge.nt{background:#f4f1d0;color:#6b6213}
+.sp-more{grid-column:1/-1;text-align:center}
+.sp-more button{border:1px solid var(--line);border-radius:8px;background:#fff;padding:8px 14px;cursor:pointer;font:inherit}

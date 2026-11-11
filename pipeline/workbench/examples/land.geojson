@@ -1,0 +1,1 @@
+{"type":"FeatureCollection","features":[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-0.373,49.181],[-0.368,49.181],[-0.368,49.185],[-0.373,49.185],[-0.373,49.181]]]},"properties":{"id":"synthetic-parcel-1","impervious_pct":25,"land_use":"mixed","synthetic":true}}]}

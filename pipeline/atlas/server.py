@@ -35,4 +35,11 @@ from pipeline.graph.api import router as graph_router
 from pipeline.ingest.api import router as ingest_router
 app.include_router(graph_router)
 app.include_router(ingest_router)
-app.mount('/',StaticFiles(directory=P/'dist',html=True),name='atlas')
+# Atelier de données (ex renatura-workbench): reference intake -> validation -> quarantine -> populate,
+# logged jobs, served at /workbench (UI) and /workbench/api (API). Mounted before the site catch-all.
+try:
+    from pipeline.workbench.app import app as workbench_app
+    app.mount('/workbench', workbench_app)
+except Exception as _error:  # missing optional dependency (jsonschema, pillow…): the rest of the site still works
+    print('Atelier de données not mounted:', _error)
+app.mount('/',StaticFiles(directory=P/'dist',html=True,follow_symlink=True),name='atlas')  # species-images is a symlink

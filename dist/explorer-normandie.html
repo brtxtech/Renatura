@@ -62,29 +62,18 @@
           <button data-metric="PP" data-i18n="protect">Protection</button>
         </div>
         
-<p style="padding:12px;background:#fff3cd;color:#463b13"
-   role="note">
-  <strong>Indice exploratoire :</strong>
-  moyenne pondérée des seuls indicateurs disponibles.
-  P peut utiliser le bâti non validé.
-  Sans V, D ou O, cet indice ne constitue pas une priorité
-  de restauration. Des cellules calculées avec des critères
-  différents ne sont pas directement comparables.
-  Classements et scénarios restent fondés sur le RP original.
-</p>
 
 <select id="metric" aria-label="Indicateur">
-          <option value="EXPLORATORY">Indice exploratoire · critères disponibles</option>
-          <option value="RP">RP · Priorité partielle</option>
+          <option value="RP">RP · Priorité de restauration</option>
           <option value="V">V · Structure écologique</option>
           <option value="D">D · Recul net des haies</option>
           <option value="P">P · Pression humaine (composite)</option>
           <option value="CTX">CTX · Contexte documentaire</option>
-          <option value="O">O · Opportunité — indisponible</option>
+          <option value="O">O · Opportunité d'action documentée</option>
           <option value="betweenness">Intermédiarité du graphe</option>
           <option value="PP">Protection — indisponible</option>
         </select>
-        <div class="coverage-note"><span>!</span><p data-i18n="partialNotice">Pilote exploratoire : V et D disponibles. Pression et faisabilité non renseignées.</p></div>
+        <div class="coverage-note"><span>!</span><p data-i18n="partialNotice">Les quatre critères V, D, P et O sont calculés pour toutes les mailles à partir des couches de l’atlas.</p></div>
         <label class="check-row"><input id="partial" type="checkbox" checked><span data-i18n="allowPartial">Autoriser le score partiel V + D</span></label>
         <div class="section-heading"><h2 data-i18n="weights">Pondération des critères</h2><button id="reset-weights" class="text-button" data-i18n="reset">Réinitialiser</button></div>
         <div id="weights"></div>
@@ -122,7 +111,7 @@
             <button id="toggle-table" class="map-button" title="Tableau" aria-label="Afficher le tableau">▤</button>
           </div>
           <div class="map-caption"><span class="live-dot"></span><span data-i18n="realData">Données réelles · Observations historiques</span></div>
-          <div class="map-legend"><div><strong id="legend-title">Priorité partielle</strong><small>0–100</small></div><div class="gradient"></div><div class="legend-labels"><span data-i18n="low">Faible</span><span data-i18n="high">Élevée</span></div><p data-i18n="grey">Gris : donnée absente / non éligible</p></div>
+          <div class="map-legend"><div><strong id="legend-title">Priorité de restauration</strong><small>0–100</small></div><div class="gradient"></div><div class="legend-labels"><span data-i18n="low">Faible</span><span data-i18n="high">Élevée</span></div><p data-i18n="grey">Gris : donnée absente / non éligible</p></div>
           <div id="loading" class="loading-card"><span class="spinner"></span><span data-i18n="loading">Chargement du territoire…</span></div>
           <div id="detail-panel" class="detail-panel" hidden></div>
         </div>

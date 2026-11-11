@@ -1,0 +1,29 @@
+{
+ "source": "214863001-1794390540-31e10135034d3488",
+ "cells": 30850,
+ "chunks": 292,
+ "chunk_rule": "id H1_<column>_<row> -> cells_detail/<column>.json",
+ "shared_fields": [
+  "methods",
+  "missing_reasons",
+  "normalization_reference",
+  "observation_years"
+ ],
+ "heavy_fields": [
+  "evidence",
+  "metrics",
+  "hit_themes",
+  "context_themes_list",
+  "V_raw",
+  "D_raw",
+  "P_raw",
+  "O_raw",
+  "V_weight_coverage",
+  "D_weight_coverage",
+  "P_weight_coverage",
+  "O_weight_coverage",
+  "pilot_V",
+  "pilot_D"
+ ],
+ "eligible_ranked": 27767
+}

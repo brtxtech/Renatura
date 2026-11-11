@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Renatura · Analyse par commune</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="extensions.css">
+  <link rel="stylesheet" href="shared-header.css">
+  <script defer src="shared-header.js"></script>
+  <style>
+    .controls { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; align-items: end; }
+    @media (max-width: 900px) { .controls { grid-template-columns: 1fr 1fr; } }
+    .sizes { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sizes button { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--line); background: #fff; cursor: pointer; font: inherit; }
+    .sizes button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .weights { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .weights label { margin: 0; }
+    .weights input { width: 100%; }
+    .hist { display: flex; align-items: flex-end; gap: 3px; height: 90px; margin-top: 8px; }
+    .hist div { flex: 1; border-radius: 3px 3px 0 0; position: relative; }
+    .hist span { position: absolute; bottom: -16px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--muted); }
+    .cmp td:nth-child(n+2) { text-align: right; }
+  </style>
+</head>
+<body>
+  <header></header>
+  <main class="ext" id="main">
+    <div class="eyebrow">Analyse territoriale</div>
+    <h1>Analyse d’une commune à la taille de maille choisie.</h1>
+    <p class="lead">Choisir une commune (par exemple Caen), l’emprise autour d’elle et la taille des mailles : 1, 2, 4 ou 8 km de côté.
+      Les mailles plus grandes regroupent les mailles régionales de 1 km² (moyennes pondérées par la surface) ; elles sont alignées
+      sur la grille Lambert-93, donc comparables d’une commune à l’autre.</p>
+    <div class="card">
+      <div class="controls">
+        <div><label for="commune">Commune</label><input id="commune" type="text" list="communes" placeholder="Caen, Rouen, Bayeux…" autocomplete="off"><datalist id="communes"></datalist></div>
+        <div><label for="zone">Emprise</label>
+          <select id="zone"><option value="0">Commune seule</option><option value="2">Commune + 2 km</option><option value="5" selected>Commune + 5 km</option><option value="10">Commune + 10 km</option><option value="20">Commune + 20 km</option></select></div>
+        <div><label for="metric">Indicateur</label>
+          <select id="metric"><option value="RP">RP · Priorité de restauration</option><option value="V">V · Valeur écologique</option>
+            <option value="D">D · Dégradation</option><option value="P">P · Pression humaine</option><option value="O">O · Opportunité d’action</option></select></div>
+        <div><label>Taille de maille</label><div class="sizes" id="sizes">
+          <button data-size="1" aria-pressed="true">1 km</button><button data-size="2" aria-pressed="false">2 km</button>
+          <button data-size="4" aria-pressed="false">4 km</button><button data-size="8" aria-pressed="false">8 km</button></div></div>
+      </div>
+      <details style="margin-top:10px"><summary class="micro">Pondération de RP</summary>
+        <div class="weights" id="weights"></div></details>
+    </div>
+    <div id="status" class="notice" hidden style="margin-top:12px"></div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="card"><div id="map" class="map"></div>
+        <div class="legend" style="margin-top:8px"><span>0</span><i style="background:#e6e9b4"></i><i style="background:#a5c784"></i><i style="background:#659d70"></i><i style="background:#326f59"></i><i style="background:#164538"></i><span>100 · plus foncé = valeur plus élevée de l’indicateur · gris = non éligible (V &lt; 10) ou donnée absente</span></div></div>
+      <div>
+        <div class="card" id="summary"><p class="muted">Choisir une commune pour lancer l’analyse.</p></div>
+        <div class="card" id="square" style="margin-top:14px" hidden></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:14px" id="table" hidden></div>
+    <div class="card" style="margin-top:14px">
+      <h3>Méthode</h3>
+      <ul class="micro">
+        <li>Base : les 30 850 mailles régionales de 1 km² de l’explorateur Normandie (V, D, P, O calculés à partir de 74 couches de l’atlas).</li>
+        <li>Une maille de taille <i>s</i> km regroupe les mailles de 1 km² dont le centre tombe dans le carré Lambert-93 correspondant.
+          Chaque critère = moyenne des mailles pondérée par leur surface (les valeurs absentes sont ignorées).</li>
+        <li>RP = moyenne pondérée de V, D, P, O agrégés (pondérations ci-dessus) ; non éligible si V &lt; 10, comme dans l’explorateur.</li>
+        <li>Résolution minimale : 1 km. Descendre sous 1 km demanderait de recalculer les critères à partir des couches de l’atlas.</li>
+        <li>« Commune + X km » : emprise rectangulaire de la commune élargie de X km.</li>
+      </ul>
+    </div>
+  </main>
+  <script src="vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="ville-normandie.js"></script>
+</body>
+</html>

@@ -122,7 +122,8 @@ MODEL = Model()
 def species_labels():
     if not LABELS.exists():
         return {}
-    return {r['scientific_name']: r for r in csv.DictReader(open(LABELS, encoding='utf-8'))}
+    with open(LABELS, encoding='utf-8') as f:
+        return {r['scientific_name']: r for r in csv.DictReader(f)}
 
 
 SPECIES = species_labels()
@@ -380,4 +381,12 @@ def unexpected(_, exc):
     return JSONResponse(status_code=500, content={'detail': f'{type(exc).__name__}: {exc}'})
 
 
-app.mount('/', StaticFiles(directory=ROOT / 'dist', html=True), name='site')
+# Atelier de données (ex renatura-workbench): reference intake -> validation -> quarantine -> populate,
+# logged jobs, served at /workbench (UI) and /workbench/api (API). Mounted before the site catch-all.
+try:
+    from pipeline.workbench.app import app as workbench_app
+    app.mount('/workbench', workbench_app)
+except Exception as _error:  # missing optional dependency (jsonschema, pillow…): the rest of the site still works
+    print('Atelier de données not mounted:', _error)
+# follow_symlink: dist/data/species-images is a link to datasets/normandie_species/images
+app.mount('/', StaticFiles(directory=ROOT / 'dist', html=True, follow_symlink=True), name='site')

@@ -1,5 +1,13 @@
 import { $, esc, fmt, partnerKey, setPartnerKey, loadJSON } from './extensions-common.js';
 
+// Embedded in data.html (onglet « Photos nature ») : no site header, report height so the frame fits.
+if (new URLSearchParams(location.search).has('embed')) {
+  document.documentElement.classList.add('embedded');
+  const report = () => parent.postMessage({ type: 'renatura-embed-height', height: document.documentElement.scrollHeight }, location.origin);
+  new ResizeObserver(report).observe(document.body);
+  addEventListener('load', report);
+}
+
 const API = '/api/nature';
 const GROUP_FR = { birds: 'oiseaux', mammals: 'mammifères', fish: 'poissons', insects: 'insectes', amphibians: 'amphibiens', reptiles: 'reptiles',
   arachnids: 'arachnides', molluscs: 'mollusques', crustaceans: 'crustacés', flowering_plants: 'plantes à fleurs', ferns: 'fougères',

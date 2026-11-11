@@ -1,6 +1,8 @@
 
 (() => {
   if (document.getElementById('renatura-header')) return;
+  // Embedded inside another page (e.g. the photos tab of data.html): no site header.
+  if (new URLSearchParams(location.search).has('embed')) return;
 
   const old = document.querySelector('body > header')
     || document.querySelector('header');
@@ -14,16 +16,19 @@
     </a>
     <nav aria-label="Navigation principale">
       <a href="atlas.html">Atlas régional</a>
-      <a href="index.html">Explorer · Pays d’Auge</a>
-      <a href="explorer-normandie.html">Explorer · Normandie</a>
+      <button type="button" class="rh-menu-button" id="rh-explorer-btn" aria-haspopup="true" aria-expanded="false" aria-controls="rh-explorer-panel">Explorer ▾</button>
       <a href="species-map.html">Observations &amp; images</a>
-      <a href="photos-normandie.html">Photos nature</a>
       <a href="acheteur-normandie.html">Prix &amp; bénéfice</a>
       <a href="climat-normandie.html">Climat</a>
-      <a href="graph.html">Neo4j</a>
+      <a href="ville-normandie.html">Analyse par commune</a>
       <a href="data.html">Ajouter des données</a>
     </nav>
   `;
+
+  // Pages in a sub-folder (e.g. /workbench/) need '../' in front of the site's relative links.
+  const base = /\/workbench\//.test(location.pathname) ? '../' : '';
+  const rebase = root => { if (base) root.querySelectorAll('a[href]').forEach(a => { const h = a.getAttribute('href'); if (!/^(https?:|#|\/|\.\.\/)/.test(h)) a.setAttribute('href', base + h); }); };
+  rebase(header);
 
   // Conserva los elementos originales y sus identificadores:
   // los scripts existentes pueden seguir utilizándolos.
@@ -54,5 +59,38 @@
   if (content.childElementCount) {
     tools.append(content);
     old.after(tools);
+  }
+  // Explorer menu: a floating layer appended to <body> (outside the scrolling nav), opened by the button.
+  const button = header.querySelector('#rh-explorer-btn');
+  if (button) {
+    const panel = document.createElement('div');
+    panel.id = 'rh-explorer-panel';
+    panel.className = 'rh-menu-panel';
+    panel.setAttribute('role', 'menu');
+    panel.hidden = true;
+    panel.innerHTML = `
+      <a role="menuitem" href="explorer-normandie.html" data-page-file="explorer-normandie.html">
+        <b>Normandie · territoire régional</b>
+        <span>30 850 mailles de 1 km² · V, D, P, O calculés à partir des couches de l’atlas · scénarios régionaux</span></a>
+      <a role="menuitem" href="index.html" data-page-file="index.html">
+        <b>Pays d’Auge · site pilote FR2502014</b>
+        <span>Bocages et vergers du sud Pays d’Auge · haies 1947 / 2010 / 2016 observées · méthode de référence</span></a>`;
+    document.body.append(panel);
+    rebase(panel);
+    const page = location.pathname.split('/').pop() || 'index.html';
+    panel.querySelectorAll('[data-page-file]').forEach(a => a.classList.toggle('current', a.dataset.pageFile === page));
+    const close = () => { panel.hidden = true; button.setAttribute('aria-expanded', 'false'); };
+    button.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!panel.hidden) return close();
+      const r = button.getBoundingClientRect();
+      panel.hidden = false;
+      panel.style.top = (r.bottom + 8) + 'px';
+      panel.style.left = Math.max(8, Math.min(r.left, innerWidth - panel.offsetWidth - 8)) + 'px';
+      button.setAttribute('aria-expanded', 'true');
+    });
+    document.addEventListener('click', e => { if (!panel.hidden && !panel.contains(e.target)) close(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && !panel.hidden) { close(); button.focus(); } });
+    addEventListener('resize', close);
   }
 })();

@@ -41,7 +41,7 @@ def fingerprint(path):
 
 
 def round_coords(c):
-    return [round_coords(x) for x in c] if isinstance(c[0], list) else [round(c[0], 5), round(c[1], 5)]
+    return [round_coords(x) for x in c] if isinstance(c[0], (list, tuple)) else [round(c[0], 5), round(c[1], 5)]
 
 
 def default_score(p):
@@ -106,7 +106,59 @@ def build(force=False):
     man_path.write_text(json.dumps({'source': fp, 'cells': len(feats), 'chunks': len(chunks), 'chunk_rule': 'id H1_<column>_<row> -> cells_detail/<column>.json',
                                     'shared_fields': list(shared), 'heavy_fields': list(HEAVY), 'eligible_ranked': len(rank)}, indent=1))
     print(f'cells_display.geojson {len(text) / 1e6:.1f} MB · {len(chunks)} detail chunks · shared {list(shared)} · ranked {len(rank)}')
+    city_files(feats)
     return True
+
+
+def city_files(feats):
+    """Compact cell table + commune outlines for the city / cell-size page (ville-normandie.html).
+
+    cells_points.json : columnar arrays (id, Lambert-93 x/y, lon/lat, area, V, D, P, O, commune index)
+    communes.geojson  : 2,651 Normandy communes (insee, name), simplified ~30 m, from the atlas layer
+                        'Communes concernées par les milieux humides' (complete list of the region's communes)
+    """
+    import shapely
+    from pyproj import Transformer
+    from shapely.geometry import mapping, shape
+    geoms = [shape(f['geometry']) for f in feats]
+    cent = shapely.centroid(geoms)
+    lon, lat = shapely.get_x(cent), shapely.get_y(cent)
+    x, y = Transformer.from_crs(4326, 2154, always_xy=True).transform(lon, lat)
+    comm, names = [], []
+    for ch in sorted((ROOT / 'dist/data/atlas/api_a6d7ddcd921b8ae9').glob('*.geojson.gz')):
+        for f in json.load(gzip.open(ch))['features']:
+            p = {k.split('}')[-1]: v for k, v in (f.get('properties') or {}).items()}
+            if f.get('geometry') and p.get('insee_com'):
+                comm.append(shape(f['geometry']).buffer(0))
+                names.append({'insee': str(p['insee_com']), 'name': str(p.get('nom_m') or p['insee_com']).title()})
+    tree = shapely.STRtree(comm)
+    pi, ci = tree.query(cent, predicate='within')
+    commune_of = [-1] * len(feats)
+    for a, b in zip(pi, ci):
+        commune_of[int(a)] = int(b)
+    r = lambda v, d: None if not isinstance(v, (int, float)) or not math.isfinite(v) else round(v, d)
+    props = [f['properties'] for f in feats]
+    table = {'fields': 'columnar arrays aligned by index; x/y Lambert-93 (m); commune = index in communes',
+             'communes': names, 'id': [p['id'] for p in props],
+             'x': [int(v) for v in x], 'y': [int(v) for v in y],
+             'lon': [round(float(v), 5) for v in lon], 'lat': [round(float(v), 5) for v in lat],
+             'area': [r(p.get('area_ha'), 2) for p in props],
+             **{k: [r(p.get(k), 1) for p in props] for k in KEYS},
+             'commune': commune_of}
+    t = json.dumps(table, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
+    (DATA / 'cells_points.json').write_text(t, encoding='utf-8')
+    with gzip.open(DATA / 'cells_points.json.gz', 'wt', encoding='utf-8', compresslevel=9) as g:
+        g.write(t)
+    simple = shapely.simplify(comm, 0.0003, preserve_topology=True)
+    fc = {'type': 'FeatureCollection', 'features': [
+        {'type': 'Feature', 'properties': {**n, 'index': i}, 'geometry': {'type': m['type'], 'coordinates': round_coords(m['coordinates'])}}
+        for i, (n, m) in enumerate((n, mapping(g)) for n, g in zip(names, simple))]}
+    c = json.dumps(fc, ensure_ascii=False, separators=(',', ':'))
+    (DATA / 'communes.geojson').write_text(c, encoding='utf-8')
+    with gzip.open(DATA / 'communes.geojson.gz', 'wt', encoding='utf-8', compresslevel=9) as g:
+        g.write(c)
+    print(f'cells_points.json {len(t) / 1e6:.1f} MB · communes.geojson {len(c) / 1e6:.1f} MB · '
+          f'{sum(v >= 0 for v in commune_of)}/{len(feats)} cells inside a commune')
 
 
 if __name__ == '__main__':

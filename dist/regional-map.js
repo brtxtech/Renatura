@@ -212,7 +212,7 @@ export class AtlasMap {
   drawFallback() {
     if(this.leaflet){
       if(this.cellLayer)this.leaflet.removeLayer(this.cellLayer);
-      this.cellLayer=L.geoJSON(this.features,{style:f=>{const p=f.properties;return {fillColor:p.missing?'#c7cdc3':palette[Math.min(4,Math.floor(p.display/25))],fillOpacity:.82,color:p.selected?'#c27028':'#fafbee',weight:p.selected?3:.7}},onEachFeature:(f,l)=>{l.bindTooltip(escapeHTML(f.properties.commune)+' · '+escapeHTML(f.properties.id));l.on('click',()=>this.onSelect(f.properties.id))}}).addTo(this.leaflet);return;
+      this.cellLayer=L.geoJSON(this.features,{style:f=>{const p=f.properties;return {fillColor:p.missing?'#c7cdc3':palette[Math.min(4,Math.floor(p.display/20))],fillOpacity:.82,color:p.selected?'#c27028':'#fafbee',weight:p.selected?3:.7}},onEachFeature:(f,l)=>{l.bindTooltip(escapeHTML(f.properties.commune)+' · '+escapeHTML(f.properties.id));l.on('click',()=>this.onSelect(f.properties.id))}}).addTo(this.leaflet);return;
     }
     const svg = document.getElementById('fallback-map');
     svg.replaceChildren();
@@ -229,7 +229,7 @@ export class AtlasMap {
       const p = feature.properties;
       path.setAttribute('d', d);
       path.setAttribute('fill-rule', 'evenodd');
-      path.setAttribute('fill', p.missing ? '#c7cdc3' : palette[Math.min(4, Math.floor(p.display / 25))]);
+      path.setAttribute('fill', p.missing ? '#c7cdc3' : palette[Math.min(4, Math.floor(p.display / 20))]);
       path.setAttribute('stroke', p.selected ? '#c27028' : '#fafbee');
       path.setAttribute('stroke-width', p.selected ? '3' : '.7');
       path.setAttribute('tabindex', '0');

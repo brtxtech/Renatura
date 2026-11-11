@@ -3,3 +3,8 @@ shapely>=2.0,<3
 pyproj>=3.6,<4
 fastapi>=0.115,<1
 uvicorn>=0.30,<1
+# Atelier de données (pipeline/workbench)
+jsonschema>=4.23,<5
+pillow>=10,<13
+python-multipart>=0.0.18,<1
+httpx>=0.27,<1

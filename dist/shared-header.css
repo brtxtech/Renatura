@@ -89,3 +89,22 @@ html {
     font-size: 20px !important;
   }
 }
+
+/* Explorer menu: one word in the header, sections in a floating layer */
+#renatura-header .rh-menu-button {
+  flex: 0 0 auto !important; appearance: none !important; background: transparent !important; border: 0 !important;
+  padding: 6px 0 !important; margin: 0 !important; cursor: pointer !important; white-space: nowrap !important;
+  font: 600 13px system-ui, sans-serif !important; color: #173d31 !important; text-decoration: none !important;
+}
+#renatura-header .rh-menu-button:hover, #renatura-header .rh-menu-button[aria-expanded="true"] { text-decoration: underline !important; }
+#rh-explorer-panel {
+  position: fixed !important; z-index: 10050 !important; display: grid !important; gap: 4px !important;
+  width: min(420px, calc(100vw - 16px)) !important; padding: 8px !important; box-sizing: border-box !important;
+  background: #ffffff !important; border: 1px solid #dde4d8 !important; border-radius: 10px !important;
+  box-shadow: 0 12px 32px rgba(23, 61, 49, .18) !important; font: 400 12px/1.45 system-ui, sans-serif !important;
+}
+#rh-explorer-panel[hidden] { display: none !important; }
+#rh-explorer-panel a { display: block !important; padding: 10px 12px !important; border-radius: 8px !important; color: #5d6f66 !important; text-decoration: none !important; }
+#rh-explorer-panel a b { display: block !important; font: 600 14px system-ui, sans-serif !important; color: #173d31 !important; margin-bottom: 2px !important; }
+#rh-explorer-panel a:hover { background: #eef3ec !important; }
+#rh-explorer-panel a.current { background: #e3f2ea !important; }

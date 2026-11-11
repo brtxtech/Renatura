@@ -68,6 +68,7 @@ class NaturePhotoRules(unittest.TestCase):
                                         'probability': 0.6}] + [{'scientific_name': f'sp{i}', 'french_name': '', 'group_en': 'x',
                                                                  'probability': 0.1} for i in range(4)]
         s.MODEL.threshold = 0.9
+        s.EVIDENCE_OUT = pathlib.Path(cls.tmp.name) / 'photo_evidence.json'  # never overwrite the published layer
         s.CELL_INDEX.find = lambda lon, lat: 'H1_TEST' if 48 < lat < 51 else None
         s.SPECIES = {'Lutra lutra': {'protected_france': 'True', 'red_list_normandie': 'EN', 'group_en': 'mammals'}}
         import hashlib
