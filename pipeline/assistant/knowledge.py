@@ -119,9 +119,15 @@ def extract_text(filename, raw):
     if name.endswith('.pdf'):
         from pypdf import PdfReader
         return '\n\n'.join((p.extract_text() or '') for p in PdfReader(io.BytesIO(raw)).pages)
-    if name.endswith(('.md', '.txt', '.csv', '.json', '.geojson')):
+    if name.endswith(('.json', '.geojson')):  # indented so that passages stay readable and searchable
+        text = raw.decode('utf-8-sig', errors='replace')
+        try:
+            return json.dumps(json.loads(text), ensure_ascii=False, indent=1)
+        except ValueError:
+            return text
+    if name.endswith(('.md', '.txt', '.csv')):
         return raw.decode('utf-8', errors='replace')
-    raise ValueError('formats acceptés : .md, .txt, .pdf, .csv, .json')
+    raise ValueError('formats acceptés : .md, .txt, .pdf, .csv, .json, .geojson')
 
 
 # ---------------------------------------------------------------- documents

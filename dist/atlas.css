@@ -17,3 +17,16 @@ header nav{flex-wrap:wrap;row-gap:0}header nav a,header nav button{white-space:n
 .section-actions{display:flex;gap:12px;align-items:center}
 .text-button.reset{color:#8a5a12;font-weight:650}
 .filters{display:flex;flex-direction:column;align-items:stretch;gap:7px}.filters select,.filters select:first-child{width:100%;flex:none;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:28px}.filters .check{flex:none;padding:4px 2px;font-size:11px;white-space:normal}
+/* Cell analysis: results grouped by theme, checkbox = show the layer clipped to the analysed area */
+.result-theme{border-top:1px solid var(--line);margin-top:6px}
+.result-theme>summary{display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;font-weight:600;font-size:12px;color:var(--green)}
+.result-theme>summary span{flex:1}
+.result-theme>summary small{color:var(--muted);font-weight:400}
+.result-theme .result-row{display:flex;align-items:flex-start;gap:8px;padding:0 0 0 2px}
+.result-theme .result-row input{margin-top:12px;flex:none}
+.result-theme .result-row button{flex:1;border:0;background:none;padding:10px 0;text-align:left;color:var(--ink);font-size:11px;line-height:1.45;cursor:pointer}
+.result-theme .result-row button b{float:right;margin-left:10px}
+.result-theme>summary{list-style:none}
+.result-theme>summary::-webkit-details-marker{display:none}
+.result-theme>summary::before{content:'▸';flex:none;width:18px;font-size:20px;line-height:1;text-align:center;color:var(--green);transition:transform .15s}
+.result-theme[open]>summary::before{transform:rotate(90deg)}

@@ -88,9 +88,9 @@
       <section class="card chat" aria-label="Conversation">
         <div id="messages" aria-live="polite"></div>
         <form class="composer" id="composer">
-          <label class="sr-only" for="photo" style="position:absolute;left:-9999px">Photo</label>
-          <input id="photo" type="file" accept="image/*" hidden>
-          <button type="button" id="attach" title="Joindre une photo de terrain">Photo</button>
+          <label class="sr-only" for="photo" style="position:absolute;left:-9999px">Photo ou fichier JSON</label>
+          <input id="photo" type="file" accept="image/*,.json,.geojson,application/json,application/geo+json" hidden>
+          <button type="button" id="attach" title="Joindre une photo de terrain ou un fichier JSON / GeoJSON">Joindre</button>
           <textarea id="input" rows="1" placeholder="Pourquoi la pression humaine est-elle forte à Caen ?" aria-label="Votre question"></textarea>
           <button type="submit" class="send" id="send">Envoyer</button>
           <div class="attached" id="attached" hidden></div>
@@ -121,7 +121,7 @@
         </div>
         <div class="mh-model">
           <b>SpeciesPhoto</b><span class="micro">Reconnaissance d’espèce · exploratoire (52,6 % en top-1)</span>
-          <p>Bouton <b>Photo</b> sous la conversation : l’assistant propose l’espèce probable et 4 autres candidates, et place la photo
+          <p>Bouton <b>Joindre</b> sous la conversation, avec une photo : l’assistant propose l’espèce probable et 4 autres candidates, et place la photo
             dans sa maille si elle contient des coordonnées GPS.</p>
         </div>
       </div>
@@ -150,6 +150,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="assistant.js"></script>
+  <script type="module" src="assistant.js?v=2"></script>
 </body>
 </html>

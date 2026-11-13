@@ -127,10 +127,41 @@ def analyse_photo(raw):
     return out
 
 
-def ask(question, page_context=None, history=None, photo=None, max_steps=6, model=None):
+MAX_JSON = 5 * 1024 * 1024
+JSON_CHARS = 12000  # what the model receives from an attached JSON file (local models have a small context)
+
+
+def read_json_attachment(filename, raw):
+    """Attached .json / .geojson -> readable text for the model: structure summary + content, truncated."""
+    try:
+        data = json.loads(raw.decode('utf-8-sig'))
+    except (UnicodeDecodeError, ValueError) as e:
+        raise ValueError(f'JSON invalide ({e})')
+    head = []
+    if isinstance(data, dict) and data.get('type') == 'FeatureCollection' and isinstance(data.get('features'), list):
+        feats = data['features']
+        geoms = sorted({(f.get('geometry') or {}).get('type') or 'sans géométrie' for f in feats if isinstance(f, dict)})
+        keys = sorted({k for f in feats if isinstance(f, dict) for k in (f.get('properties') or {})})
+        head.append(f'GeoJSON FeatureCollection : {len(feats)} objets ; géométries : {", ".join(geoms) or "aucune"} ; '
+                    f'attributs : {", ".join(keys[:60]) or "aucun"}')
+        # coordinates are long and useless to read: keep the attributes of the objects
+        data = {'objets (attributs)': [(f.get('properties') or {}) for f in feats if isinstance(f, dict)]}
+    elif isinstance(data, list):
+        head.append(f'Liste JSON de {len(data)} éléments')
+    elif isinstance(data, dict):
+        head.append(f'Objet JSON ; clés : {", ".join(list(data)[:60])}')
+    body = json.dumps(data, ensure_ascii=False, separators=(', ', ': '), default=str)
+    truncated = len(body) > JSON_CHARS
+    text = '\n'.join(head) + '\n' + body[:JSON_CHARS] + ('\n… (contenu tronqué)' if truncated else '')
+    return {'nom': filename, 'resume': head[0] if head else 'JSON', 'tronque': truncated, 'texte': text}
+
+
+def ask(question, page_context=None, history=None, photo=None, max_steps=6, model=None, attachment=None):
     s = store()
     trace = []
-    text = question.strip() or 'Que montre cette photo ?'
+    text = question.strip() or ('Que contient ce fichier ?' if attachment else 'Que montre cette photo ?')
+    if attachment is not None:
+        text += f"\n\n[Fichier JSON joint : {attachment['nom']}]\n{attachment['texte']}"
     if photo is not None:
         text += '\n\n[Analyse automatique de la photo jointe] ' + json.dumps(photo, ensure_ascii=False)
     messages = [{'role': 'system', 'content': SYSTEM.format(page_context=json.dumps(page_context or {}, ensure_ascii=False))},
@@ -146,17 +177,18 @@ def ask(question, page_context=None, history=None, photo=None, max_steps=6, mode
             {'id': call_id, 'type': 'function', 'function': {'name': name, 'arguments': json.dumps(args, ensure_ascii=False)}}]})
         messages.append({'role': 'tool', 'tool_call_id': call_id, 'content': json.dumps(result, ensure_ascii=False, default=str)})
     nudged = False
+    known_text = question + (' ' + attachment['texte'] if attachment else '')
     for _ in range(max_steps):
         msg = _llm(messages, model=model)
         calls = msg.get('tool_calls') or []
         if not calls:
             answer = msg.get('content') or ''
-            if not trace and not nudged and _has_numbers(answer):  # numbers without any tool result: retry once
+            if not trace and not nudged and attachment is None and _has_numbers(answer):  # numbers without any tool result: retry once
                 nudged = True
                 messages.append({'role': 'user', 'content': "Tu n'as appelé aucun outil : appelle d'abord l'outil adapté "
                                  "(commune_summary, get_cell_profile, explain_index ou similar_cells), puis réponds."})
                 continue
-            return {'answer': answer, 'tools': trace, 'unverified': _unverified(answer, trace, question, photo)}
+            return {'answer': answer, 'tools': trace, 'unverified': _unverified(answer, trace, known_text, photo)}
         messages.append({'role': 'assistant', 'content': msg.get('content') or '', 'tool_calls': calls})
         for tc in calls:
             name = tc['function']['name']
@@ -177,7 +209,7 @@ def ask(question, page_context=None, history=None, photo=None, max_steps=6, mode
                              'content': json.dumps(result, ensure_ascii=False, default=str)})
     final = _llm(messages + [{'role': 'user', 'content': 'Réponds maintenant avec les résultats obtenus.'}], use_tools=False, model=model)
     answer = final.get('content') or "Je n'ai pas pu terminer l'analyse."
-    return {'answer': answer, 'tools': trace, 'unverified': _unverified(answer, trace, question, photo)}
+    return {'answer': answer, 'tools': trace, 'unverified': _unverified(answer, trace, known_text, photo)}
 
 
 VAR_WORDS = [(('pression',), 'P'), (('valeur ecologique', 'biodiversite'), 'V'), (('degradation',), 'D'),
@@ -304,13 +336,13 @@ def health():
 
 @router.post('/chat')
 async def chat(message: str = Form(''), history: str = Form('[]'), page_context: str = Form('{}'),
-               model: str = Form(''), photo: UploadFile | None = File(None)):
+               model: str = Form(''), photo: UploadFile | None = File(None), file: UploadFile | None = File(None)):
     try:
         hist = json.loads(history or '[]')
         ctx = json.loads(page_context or '{}')
     except ValueError:
         raise HTTPException(422, 'history / page_context : JSON invalide')
-    if not message.strip() and photo is None:
+    if not message.strip() and photo is None and file is None:
         raise HTTPException(422, 'message vide')
     if len(message) > 4000:
         raise HTTPException(413, 'message trop long (4 000 caractères maximum)')
@@ -320,12 +352,24 @@ async def chat(message: str = Form(''), history: str = Form('[]'), page_context:
         if len(raw) > MAX_IMAGE:
             raise HTTPException(413, 'photo trop lourde (15 Mo maximum)')
         analysed = analyse_photo(raw)
+    attachment = None
+    if file is not None:
+        if not (file.filename or '').lower().endswith(('.json', '.geojson')):
+            raise HTTPException(415, 'fichier joint : seuls .json et .geojson sont acceptés')
+        raw = await file.read(MAX_JSON + 1)
+        if len(raw) > MAX_JSON:
+            raise HTTPException(413, 'fichier JSON trop lourd (5 Mo maximum)')
+        try:
+            attachment = read_json_attachment(file.filename, raw)
+        except ValueError as e:
+            raise HTTPException(422, str(e))
     t = time.time()
     chosen = model.strip() or MODEL
     if not all(c.isalnum() or c in ':._-/' for c in chosen) or len(chosen) > 80:
         raise HTTPException(422, 'nom de modèle invalide')
-    result = ask(message, ctx, hist, analysed, model=chosen)
-    return {**result, 'photo': analysed, 'model': chosen, 'seconds': round(time.time() - t, 1)}
+    result = ask(message, ctx, hist, analysed, model=chosen, attachment=attachment)
+    fichier = {k: attachment[k] for k in ('nom', 'resume', 'tronque')} if attachment else None
+    return {**result, 'photo': analysed, 'fichier': fichier, 'model': chosen, 'seconds': round(time.time() - t, 1)}
 
 
 # ---------------------------------------------------------------- knowledge base management (RAG)

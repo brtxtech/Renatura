@@ -11,7 +11,7 @@ const EXAMPLES = [
   'Si la tendance continue, quelle part bâtie à Caen en 2040 ?',
 ];
 const history = [];
-let photo = null, busy = false;
+let photo = null, jsonFile = null, busy = false;
 
 // ---------- model status
 async function health() {
@@ -58,10 +58,11 @@ function toolsBox(r) {
 async function send(text) {
   if (busy) return;
   text = text.trim();
-  if (!text && !photo) return;
+  if (!text && !photo && !jsonFile) return;
   busy = true; $('#send').disabled = true;
   const preview = photo ? `<img class="preview" src="${URL.createObjectURL(photo)}" alt="">` : '';
-  add('user', esc(text || 'Que montre cette photo ?') + preview);
+  const fileTag = jsonFile ? `<div class="micro">📎 ${esc(jsonFile.name)}</div>` : '';
+  add('user', esc(text || (jsonFile ? 'Que contient ce fichier ?' : 'Que montre cette photo ?')) + preview + fileTag);
   const t0 = Date.now();
   const typing = add('typing', 'L’assistant réfléchit… 0 s');
   const timer = setInterval(() => { typing.textContent = `L’assistant réfléchit et interroge les données… ${Math.round((Date.now() - t0) / 1000)} s`; }, 1000);
@@ -71,14 +72,17 @@ async function send(text) {
   body.append('model', $('#model').value || '');
   body.append('page_context', JSON.stringify({ page: 'assistant', commune: $('#ctx-commune').value.trim() || undefined, cell_id: $('#ctx-cell').value.trim() || undefined }));
   if (photo) body.append('photo', photo);
+  if (jsonFile) body.append('file', jsonFile);
+  const sentFile = jsonFile?.name;
   clearPhoto();
   $('#input').value = '';
   try {
     const res = await fetch('api/assistant/chat', { method: 'POST', body });
     const r = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(r.detail || `HTTP ${res.status}`);
-    add('bot', linkCells(esc(r.answer || '(réponse vide)')) + photoBox(r.photo) + toolsBox(r));
-    history.push({ role: 'user', content: text }, { role: 'assistant', content: r.answer || '' });
+    const fileBox = r.fichier ? `<div class="photo-box"><b>Fichier lu</b> : ${esc(r.fichier.nom)}<br>${esc(r.fichier.resume)}${r.fichier.tronque ? '<br><span class="micro">Fichier long : seul le début a été transmis au modèle.</span>' : ''}</div>` : '';
+    add('bot', linkCells(esc(r.answer || '(réponse vide)')) + photoBox(r.photo) + fileBox + toolsBox(r));
+    history.push({ role: 'user', content: text + (sentFile ? ` [fichier joint : ${sentFile}]` : '') }, { role: 'assistant', content: r.answer || '' });
   } catch (e) {
     add('error', 'Erreur : ' + esc(e.message) + '<br><span class="micro">Vérifier que le serveur 8090 et Ollama tournent.</span>');
   } finally {
@@ -88,15 +92,17 @@ async function send(text) {
 }
 
 // ---------- photo
-function clearPhoto() { photo = null; $('#photo').value = ''; $('#attached').hidden = true; $('#attached').innerHTML = ''; }
+function clearPhoto() { photo = null; jsonFile = null; $('#photo').value = ''; $('#attached').hidden = true; $('#attached').innerHTML = ''; }
 $('#attach').addEventListener('click', () => $('#photo').click());
 $('#photo').addEventListener('change', () => {
   const f = $('#photo').files[0];
   if (!f) return;
-  if (f.size > 15 * 1024 * 1024) { alert('Photo trop lourde (15 Mo maximum).'); return clearPhoto(); }
-  photo = f;
+  const isJson = /\.(geo)?json$/i.test(f.name) || /json/.test(f.type);
+  if (isJson && f.size > 5 * 1024 * 1024) { alert('Fichier JSON trop lourd (5 Mo maximum).'); return clearPhoto(); }
+  if (!isJson && f.size > 15 * 1024 * 1024) { alert('Photo trop lourde (15 Mo maximum).'); return clearPhoto(); }
+  if (isJson) { jsonFile = f; } else { photo = f; }
   $('#attached').hidden = false;
-  $('#attached').innerHTML = `Photo jointe : ${esc(f.name)} <button type="button" id="unattach">Retirer</button>`;
+  $('#attached').innerHTML = `${isJson ? 'Fichier JSON joint' : 'Photo jointe'} : ${esc(f.name)} <button type="button" id="unattach">Retirer</button>`;
   $('#unattach').onclick = clearPhoto;
 });
 
@@ -109,7 +115,7 @@ $('#examples').querySelectorAll('button').forEach(b => b.addEventListener('click
 document.querySelectorAll('.models-help .ask').forEach(b => b.addEventListener('click', () => { $('#messages').scrollIntoView({ behavior: 'smooth', block: 'center' }); send(b.textContent); }));
 $('#clear').addEventListener('click', () => { history.length = 0; $('#messages').innerHTML = ''; welcome(); });
 function welcome() {
-  add('bot', 'Bonjour ! Posez une question sur une commune, une maille (ex. H1_538_6422) ou un indice, ou joignez une photo de terrain avec le bouton Photo.\nLes réponses du modèle local peuvent prendre une à deux minutes sur cet ordinateur.');
+  add('bot', 'Bonjour ! Posez une question sur une commune, une maille (ex. H1_538_6422) ou un indice, ou joignez une photo de terrain ou un fichier JSON / GeoJSON avec le bouton Joindre.\nLes réponses du modèle local peuvent prendre une à deux minutes sur cet ordinateur.');
 }
 welcome();
 health();

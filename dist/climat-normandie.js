@@ -83,4 +83,4 @@ $('#layer').addEventListener('change', draw);
 draw();
 const m = data.meta;
 $('#method').innerHTML = `<h3>Méthode</h3><ul><li>Référence ${esc(m.baseline)} ; période récente ${esc(m.recent_period)}.</li><li>${esc(m.trend_method)}.</li></ul>
-  <p class="micro">Sources : ${m.sources.map(esc).join(' · ')}</p><h3>Limites</h3><ul>${m.caveats.map(c => `<li>${esc(c)}</li>`).join('')}</ul>`;
+  <p class="micro">Sources : ${m.sources.map(esc).join(' · ')}</p>`;
