@@ -148,39 +148,6 @@
           </ul>
         </div>
       </div>
-
-      <h3>Toutes les données de Renatura, accessibles à l’assistant</h3>
-      <div class="mh-grid">
-        <div class="mh-model">
-          <b>Atlas régional · 194 couches</b><span class="micro">Biodiversité, eau, occupation du sol, paysages et patrimoine, littoral,
-            énergie et climat, risques, carrières, mobilité, réglementation</span>
-          <p>Ce qui est présent autour d’un lieu, et le nom des objets (quelle ZNIEFF, quel parc éolien, quel méthaniseur…).</p>
-          <button type="button" class="ask">Y a-t-il des parcs éoliens ou des méthaniseurs près de Fécamp ?</button>
-          <button type="button" class="ask">Quels sites de paysage et de patrimoine autour d’Étretat ?</button>
-        </div>
-        <div class="mh-model">
-          <b>Prix &amp; bénéfice</b><span class="micro">DVF 2021-2025 · €/ha médian, quartiles, nombre de ventes</span>
-          <p>Prix des terres agricoles, forêts et terrains ruraux, et bénéfice de restauration par euro (RP gagné pour 10 000 €),
-            avec les meilleures mailles d’une commune ou d’un département.</p>
-          <button type="button" class="ask">Combien coûte un terrain à Lisieux et quel bénéfice par euro ?</button>
-        </div>
-        <div class="mh-model">
-          <b>Climat</b><span class="micro">ERA5 1991-2025 · tendance par décennie et test de significativité</span>
-          <p>Température, jours chauds, gel, pluie, pluie d’été, jours secs, plus longue période sèche, écart 2016-2025, et prolongation
-            de la tendance (« si la tendance continue en 2050 »).</p>
-          <button type="button" class="ask">Quelles sont les tendances du climat à Coutances ?</button>
-        </div>
-      </div>
-
-      <h3>Limites à connaître</h3>
-      <ul>
-        <li>Climat : la collecte ne couvre pour l’instant que 8 points dans l’ouest de la région (Manche). Ailleurs, l’assistant prévient
-          que le point climatique est trop éloigné. Le NDVI (verdure d’été) n’est pas encore collecté.</li>
-        <li>Les 4 modèles IA n’apprennent toujours que sur l’occupation du sol (CORINE), le bâti et les infrastructures ; l’assistant croise
-          leurs prédictions avec les autres données, mais les modèles eux-mêmes ne les utilisent pas.</li>
-        <li>Pas encore de données sur les sols, ni d’indicateur « observations par euro ». Le classement des mailles par risque des modèles
-          n’est pas encore possible ; le classement par bénéfice par euro l’est.</li>
-      </ul>
     </section>
   </main>
   <script type="module" src="assistant.js"></script>

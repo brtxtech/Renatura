@@ -35,6 +35,10 @@ chmod +x run-atlas.sh
 ./run-atlas.sh
 ```
 
+`requirements-atlas.txt` lists every package Renatura needs: the server, the data workflow, the assistant, semantic search
+of the knowledge base (sentence-transformers) and the species photo model (PyTorch). The first installation downloads
+several GB and takes a few minutes. The search model is downloaded from Hugging Face on first use.
+
 Then open `http://localhost:8080/`. `run-atlas.sh` reinstalls `requirements-atlas.txt` on each launch,
 so the environment stays in step with the code. The server listens on `127.0.0.1` only.
 
@@ -54,8 +58,6 @@ Settings for specific parts, all passed to `run-atlas.sh`:
 - **Assistant chat**: the knowledge base works on its own. Chat answers need a model. By default the assistant uses a
   local [Ollama](https://ollama.com) model. Pull it once with `ollama pull qwen2.5:7b-instruct` and keep Ollama
   running. For another model, set `RENATURA_LLM_URL`, `RENATURA_LLM_MODEL` and `HF_TOKEN` (for Hugging Face).
-- **Semantic search**: install it with `.venv-atlas/bin/python -m pip install sentence-transformers`. It is large,
-  because it pulls in PyTorch. Without it, search matches exact words.
 - **Empty knowledge base**: import the corpus with `.venv-atlas/bin/python -m pipeline.assistant.knowledge build`.
 
 If a page shows "Not Found", read the start-up log of `run-atlas.sh`. A line such as `Assistant not mounted: …` or
