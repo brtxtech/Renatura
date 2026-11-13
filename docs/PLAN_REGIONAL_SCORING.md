@@ -1,7 +1,7 @@
 # Plan: make the regional Normandy atlas meaningful (multi-layer weighting)
 
 Status: implemented in `tools/normandie/multilayer_score.py` + `tools/normandie/layer_scoring.json`.
-Reference result: the pilot **"Bocages du sud Pays d'Auge"** (FR2502014, `dist/index.html`).
+Reference result: the pilot **"Bocages du sud Pays d'Auge"** (FR2502014, `dist/pays-auge.html`).
 
 ## 1. Diagnosis: why the regional map shows nulls and identical values
 

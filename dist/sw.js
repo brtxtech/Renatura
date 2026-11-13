@@ -1,7 +1,7 @@
 /* Versioned same-origin cache. No background computation or telemetry. */
 const VERSION = 'renatura-catalog-graph-20261111-v8';
 const CORE = [
-  './', './index.html', './styles.css', './app.js', './core.js', './i18n.js',
+  './', './index.html', './pays-auge.html', './atlas.html', './styles.css', './app.js', './core.js', './i18n.js',
   './orientation.js', './orientation.css', './catalog-ui.js', './custom-data.js', './data/orientation/cities.json',
   './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css',
   './map.js', './documents.js', './worker.js', './maplibre-gl.js', './maplibre-gl.css',

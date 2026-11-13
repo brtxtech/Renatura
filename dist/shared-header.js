@@ -11,7 +11,7 @@
   const header = document.createElement('header');
   header.id = 'renatura-header';
   header.innerHTML = `
-    <a class="rh-brand" href="index.html">
+    <a class="rh-brand" href="atlas.html">
       <svg class="rh-logo" viewBox="0 0 192 192" aria-hidden="true"><rect width="192" height="192" rx="40" fill="#173d31"/><path d="M96 151V76M96 116C40 119 35 68 40 42c55 0 73 32 56 74Zm0-35c-4-40 24-55 56-55 4 36-16 63-56 55Z" fill="none" stroke="#d2e5ac" stroke-width="10" stroke-linecap="round"/></svg>
       <span class="rh-name">renatura<small>NORMANDIE</small></span>
     </a>
@@ -58,7 +58,7 @@
       <a role="menuitem" href="explorer-normandie.html" data-page-file="explorer-normandie.html">
         <b>Normandie · territoire régional</b>
         <span>30 850 mailles de 1 km² · V, D, P, O calculés à partir des couches de l’atlas · scénarios régionaux</span></a>
-      <a role="menuitem" href="index.html" data-page-file="index.html">
+      <a role="menuitem" href="pays-auge.html" data-page-file="pays-auge.html">
         <b>Pays d’Auge · site pilote FR2502014</b>
         <span>Bocages et vergers du sud Pays d’Auge · haies 1947 / 2010 / 2016 observées · méthode de référence</span></a>`;
     document.body.append(panel);
