@@ -42,4 +42,10 @@ try:
     app.mount('/workbench', workbench_app)
 except Exception as _error:  # missing optional dependency (jsonschema, pillow…): the rest of the site still works
     print('Atelier de données not mounted:', _error)
+# Assistant IA + base de connaissances (RAG): /api/assistant/* (chat, knowledge documents, search)
+try:
+    from pipeline.assistant.chat import router as assistant_router
+    app.include_router(assistant_router)
+except Exception as _error:  # missing optional dependency: the map still works
+    print('Assistant not mounted:', _error)
 app.mount('/',StaticFiles(directory=P/'dist',html=True,follow_symlink=True),name='atlas')  # species-images is a symlink

@@ -9,6 +9,10 @@ const headers = () => (state.needsKey && $('#k-key').value ? { 'X-Knowledge-Key'
 async function call(path, opts = {}) {
   const r = await fetch(`${API}${path}`, { ...opts, headers: { ...(opts.headers || {}), ...headers() } });
   const body = await r.json().catch(() => ({}));
+  // 404 on the API itself = static server (python -m http.server) or assistant not mounted, not a missing document
+  if (r.status === 404 && (!body.detail || body.detail === 'Not Found')) {
+    throw new Error('Serveur de l’assistant introuvable. Cette page nécessite le serveur local : créer l’environnement virtuel puis lancer ./run-atlas.sh (voir README), puis recharger. Si le serveur tourne déjà, son journal indique « Assistant not mounted : … » avec le paquet manquant.');
+  }
   if (!r.ok) throw new Error(body.detail || `HTTP ${r.status}`);
   return body;
 }

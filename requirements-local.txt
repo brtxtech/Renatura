@@ -8,3 +8,6 @@ httpx>=0.27,<1
 jsonschema>=4.23,<5
 pillow>=10,<13
 python-multipart>=0.0.18,<1
+# Assistant IA + base de connaissances (pipeline/assistant)
+requests>=2.31,<3
+numpy>=1.26,<3

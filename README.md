@@ -18,32 +18,48 @@ unavailable. The interface labels the resulting V+D index as **partial**.
 
 ![Commune analysis for Caen with 1 km cells](docs/images/analyse-commune-caen.png)
 
-## Open the application
+## Run Renatura
 
-The `dist` folder is already built and includes its data and MapLibre assets.
-You do not need Node, npm, Python scientific packages or a backend to host it.
+**The only supported way to run Renatura is to create the virtual environment, then launch `run-atlas.sh`.**
+This is the only method that starts every part of the system together: the regional atlas, the Pays d’Auge pilot,
+the data workflow, the AI assistant and its knowledge base, and the analysis APIs.
+Other methods (opening the HTML files, a plain static file server) leave the APIs unreachable,
+and those pages show "Not Found".
 
-On a computer, from this project folder:
+From this project folder, with Python 3.10 or newer:
 
 ```bash
-python3 -m http.server 8080 --directory dist
+python3 -m venv .venv-atlas
+.venv-atlas/bin/python -m pip install -r requirements-atlas.txt
+chmod +x run-atlas.sh
+./run-atlas.sh
 ```
 
-Open `http://localhost:8080`. On Windows use `py -m http.server 8080 --directory dist`.
-Do not double-click `index.html`: browser modules and data requests need HTTP(S).
+Then open `http://localhost:8080/`. `run-atlas.sh` reinstalls `requirements-atlas.txt` on each launch,
+so the environment stays in step with the code. The server listens on `127.0.0.1` only.
 
-### iPad
+What the server starts:
 
-Use the deployed HTTPS link supplied with this project, or upload **the contents
-of `dist`** to a static HTTPS host. Open in Safari. Use Share → Add to Home Screen.
-In Methodology, choose “Prepare layers for offline use”, wait for confirmation,
-then reopen the same app. Core assets cache after the first successful online
-visit; raw layers are optional. Browser storage can be evicted by iPadOS.
+| Part | URL |
+|---|---|
+| Regional atlas (home page) and Pays d’Auge pilot | `/`, `/pays-auge.html` |
+| Data workflow (Atelier de données: intake → validation → quarantine → populate, logged jobs) | `/workbench` |
+| AI assistant and knowledge base (RAG documents, search) | `/connaissances.html`, `/api/assistant/*` |
+| Data import (GeoJSON / CSV / WFS) | `/api/...` |
+| Custom polygon analysis | `/api/analyse` |
 
-For temporary local-network testing, serve the folder on your computer and open
-`http://YOUR-COMPUTER-LAN-IP:8080` on the iPad, on the same Wi-Fi. This permits map
-use but offline service workers normally require HTTPS. Never enter `localhost`
-on the iPad to refer to your computer.
+Settings for specific parts, all passed to `run-atlas.sh`:
+
+- **Polygon analysis**: start with `RENATURA_SPATIAL_DB=/path/to/normandie.sqlite ./run-atlas.sh`.
+- **Assistant chat**: the knowledge base works on its own. Chat answers need a model. By default the assistant uses a
+  local [Ollama](https://ollama.com) model. Pull it once with `ollama pull qwen2.5:7b-instruct` and keep Ollama
+  running. For another model, set `RENATURA_LLM_URL`, `RENATURA_LLM_MODEL` and `HF_TOKEN` (for Hugging Face).
+- **Semantic search**: install it with `.venv-atlas/bin/python -m pip install sentence-transformers`. It is large,
+  because it pulls in PyTorch. Without it, search matches exact words.
+- **Empty knowledge base**: import the corpus with `.venv-atlas/bin/python -m pipeline.assistant.knowledge build`.
+
+If a page shows "Not Found", read the start-up log of `run-atlas.sh`. A line such as `Assistant not mounted: …` or
+`Atelier de données not mounted: …` names the missing package.
 
 ## Rebuild everything from the included real source snapshots
 
@@ -85,7 +101,7 @@ pipeline/          Reproducible Python stages
 configs/           Model and preset configuration
 raw/               Official source archive snapshots and commune API snapshot
  derived/          Generated GeoParquet (created on rebuild)
-dist/              Entire static app, ready to host
+dist/              Web front end and data, served by run-atlas.sh
   data/            Real aggregated data, scenarios, graph, sensitivity, catalogue
   core.js          Pure numerical functions
   worker.js        Bounded browser optimisation and sensitivity

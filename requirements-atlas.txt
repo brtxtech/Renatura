@@ -3,8 +3,12 @@ shapely>=2.0,<3
 pyproj>=3.6,<4
 fastapi>=0.115,<1
 uvicorn>=0.30,<1
+neo4j>=5.26,<7  # Python driver only (imported by the graph API); no Neo4j server needed to start
 # Atelier de données (pipeline/workbench)
 jsonschema>=4.23,<5
 pillow>=10,<13
 python-multipart>=0.0.18,<1
 httpx>=0.27,<1
+# Assistant IA + base de connaissances (pipeline/assistant)
+requests>=2.31,<3
+numpy>=1.26,<3
