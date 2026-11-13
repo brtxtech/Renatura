@@ -8,6 +8,16 @@ d’Auge), 280 clipped hexagonal planning cells, five offline ILP scenarios and
 1,000 weight-sensitivity runs. Human pressure (P) and land opportunity (O) remain
 unavailable. The interface labels the resulting V+D index as **partial**.
 
+## Screenshots
+
+**Regional atlas.** The Normandy map built up layer by layer, with thematic layers, collected sources and commune search.
+
+![Regional atlas of Normandy](docs/images/atlas-regional.png)
+
+**Commune analysis.** Caen plus a 5 km buffer, split into 1 × 1 km cells. Each cell is scored for restoration priority (RP) and compared with the Normandy average on each criterion (V, D, P, O).
+
+![Commune analysis for Caen with 1 km cells](docs/images/analyse-commune-caen.png)
+
 ## Open the application
 
 The `dist` folder is already built and includes its data and MapLibre assets.
