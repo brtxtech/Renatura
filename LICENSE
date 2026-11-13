@@ -1,24 +1,69 @@
-MIT License
+Renatura Restricted Licence
+Version 1.0
 
-Copyright (c) 2026 Renatura Normandie contributors
+Copyright (c) 2026 Britel. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Definitions
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+"Software" means the source code, scripts, models, documentation and other
+original material in this repository, excluding third-party material listed
+in section 5.
+
+"Commercial use" means any use intended for or directed towards commercial
+advantage or monetary compensation, including use by or on behalf of a
+company, use in a product or service, consulting, and internal business use.
+
+"Research use" means any use as part of scientific, academic, industrial or
+private research, study, experimentation, analysis or publication, whether
+or not for profit, including use by universities, research institutes,
+public bodies and students.
+
+2. Limited permission
+
+Permission is granted, free of charge, to view the Software and to run it on
+your own computer solely to evaluate it for personal, non-commercial and
+non-research purposes.
+
+3. Prohibited uses
+
+Without the prior written permission of the copyright holder, you may not:
+
+  a) use the Software, in whole or in part, for any commercial use;
+  b) use the Software, in whole or in part, for any research use;
+  c) copy, modify, merge, publish, distribute, sublicense or sell the
+     Software or any work derived from it, except as strictly needed for the
+     evaluation permitted in section 2;
+  d) use the Software, its outputs or its models to train, build or improve
+     another product, service or model;
+  e) remove or alter this licence or any copyright notice.
+
+Any use not expressly permitted in section 2 is prohibited.
+
+4. Termination
+
+Any breach of this licence ends the permission granted in section 2
+immediately and automatically. You must then stop using the Software and
+delete every copy in your possession.
+
+5. Third-party material
+
+This licence covers only the original project material. Third-party code,
+libraries and source data (including DREAL and administrative data under the
+Licence Ouverte 2.0 and MapLibre GL JS under the BSD-3-Clause licence) keep
+their own licences and attribution requirements, which this licence does not
+change.
+
+6. Permission requests
+
+To request permission for any use not allowed above, including commercial or
+research use, contact the copyright holder through the repository:
+https://github.com/brtxtech/Renatura
+
+7. No warranty
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-This licence covers original project code only. Third-party code and source
-data retain their own licences and attribution requirements.
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

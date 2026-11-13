@@ -191,7 +191,8 @@ that scope. Sensitivity runs always cover the entire pilot, independent of filte
 
 ## Licensing
 
-Original code: MIT, see LICENSE. DREAL and administrative data retain their
+Original code: Renatura Restricted Licence, see LICENSE. All rights reserved:
+commercial use and research use are not permitted without written permission. DREAL and administrative data retain their
 Licence Ouverte 2.0 attribution; consult `data_catalog.json` for provenance.
 MapLibre GL JS is BSD-3-Clause; see `docs/MAPLIBRE-LICENSE.txt`.
 Do not strip source attribution from exports or republished datasets.
